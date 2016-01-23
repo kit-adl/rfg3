@@ -5,19 +5,33 @@ package require odfi::h2dl::verilog    2.0.0
 
 namespace eval odfi::rfg::generator::h2dl {
 
+    nx::Trait create H2DLSupport {
+
+    }
 
     odfi::language::Language default {
 
         :H2DLGenerator {
 
+
+            +method generate args {
+                puts "CREATE H2DL IN INTERFACE"
+            }
+
             ## Create an H2DL Module 
             +method toModule args {
 
                 ## Get Interface
-                set interface [[:shade ::odfi::rfg::Interface getParentsRaw] at 0]
-                if {$interface==""} {
-                    error "Cannot Produce H2DL Module from Group if no interface is in hierarchy"
+                set interface [current object]
+                if {![$interface isClass ::odfi::rfg::Interface]} {
+                    set interface [[:shade ::odfi::rfg::Interface getParentsRaw] at 0]
+                    if {$interface==""} {
+                        error "Cannot Produce H2DL Module from Group if no interface is in hierarchy"
+                    } 
                 }
+                
+                ## Get Register Size 
+                set registerSize [$interface registerSize get]
 
                 ## Get Size 
                 set rfSize [expr int(ceil([:getAttribute odfi::rfg::address size 0]/2)) ]
@@ -31,18 +45,72 @@ namespace eval odfi::rfg::generator::h2dl {
                     :input res_n
                     :input  read
                     :output read_data {
-                        :width set [$interface registerSize get]
+                        :width set $registerSize
                     }
                     :input  write
                     :input  write_data {
-                        :width set [$interface registerSize get]
+                        :width set $registerSize
                     }
                     :output done
                     :input  address {
                         :width set $rfSize
                     }
 
+                    ## Map Register Definitions to Register or something else 
+                    ##############
 
+                    $rf walkDepthFirstPreorder -level 1 {
+
+                        if {[$node isClass odfi::rfg::Register]} {
+
+                            ## Create Default Register , or use provided H2DL result 
+                            if {[$node isClass odfi::rfg::generator::h2dl::H2DLSupport]} {
+                                set h2dlNode [$node h2dl:produce]
+                                :addChild $h2dlNode
+
+                                puts "Supported H2Dl Register created module: [$h2dlNode info class]"
+                                ## If the provided node is a module, then we can find special IOs for Interface 
+                                if {[$h2dlNode isClass ::odfi::h2dl::Module]} {
+                                    $h2dlNode shade odfi::h2dl::IO eachChild {
+                                        {io i} => 
+
+                                            puts "Found and IO: [$io name get] -> [$io hasAttribute ::odfi::rfg::h2dl reset]"
+                                            ## Connect IOs with supported attribute 
+                                            ## Other IOs are just pushed_up
+                                            if {[$io hasAttribute ::odfi::rfg::h2dl clock]} {
+                                                $io connection $clk
+                                            } elseif {[$io hasAttribute ::odfi::rfg::h2dl reset]} {
+                                                $io connection $res_n 
+                                            } elseif {[$io hasAttribute ::odfi::rfg::h2dl read_enable]} {
+                                                $io connection $read 
+                                            } else {
+                                                $io pushUp [$node getHierarchyName]
+                                            }
+                                    }
+                                }
+
+                            } else {
+
+                                ## Add Std Reg 
+                                set h2dlReg [:register [$node getHierarchyName] {
+                                    :width set $registerSize
+
+                                    ## Each Field creates an output 
+                                    $node shade ::odfi::rfg::Field eachChild {
+                                        #:wire [:name get]_[$it name get]
+                                        set bitmap [uplevel 2 [list :bitMap 0 [$it name get]]]
+                                        $bitmap apply {
+                                            #puts "Inside: [:info class]"
+                                            #${:wire} toOutput
+                                        }
+                                    }
+                                }]
+
+                            }
+                        }
+                    }
+
+                    return
 
                     ## Register fields make up the IOs
                     $rf walkDepthFirstPreorder -level 1 {
@@ -100,7 +168,9 @@ namespace eval odfi::rfg::generator::h2dl {
 
     }
 
-    ::odfi::rfg::Group domain-mixins add odfi::rfg::generator::h2dl::H2DLGenerator -prefix h2dl
+    puts "ADDDING TO INTERFACE"
+
+    ::odfi::rfg::Interface domain-mixins add odfi::rfg::generator::h2dl::H2DLGenerator -prefix h2dl
 
 
 }

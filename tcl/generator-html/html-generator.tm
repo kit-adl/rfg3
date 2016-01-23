@@ -1,6 +1,7 @@
 package provide odfi::rfg::generator::html      3.0.0
 package require odfi::rfg                       3.0.0
 package require odfi::ewww::html                2.0.0
+package require http 2.8.8
 
 namespace eval odfi::rfg::generator::html {
 
@@ -15,8 +16,15 @@ namespace eval odfi::rfg::generator::html {
 
             +method toHTML folder {
 
-                ## Prepare base HTML
+                ## Prepare Output Folder 
+                file mkdir $folder
+
+                ## set main Name 
                 set rfGroup [current object]
+
+                
+                ## Prepare base HTML
+                
                 set html [odfi::ewww::html::html {
                     :head {
                         :bootstrap:localUse $folder

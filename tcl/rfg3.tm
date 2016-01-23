@@ -35,34 +35,21 @@ namespace eval odfi::rfg {
         #}
         ## Common Data 
         #####################
-        +type Description  {
+        +type RFGNode {
+
+            +method getHierarchyName {{separator _}} {
+
+                return [:shade { return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[$node name get]
+
+            }
+        }
+        +type Description : RFGNode {
 
             +var description ""
             +mixin ::odfi::attributes::AttributesContainer
         }
 
-        ## Interface Wrapper
-        #################
-        :interface : ::odfi::h2dl::Module name {
-            +exportToPublic
-            +expose    name
-            +mixin ::odfi::attributes::AttributesContainer
-            +exportTo ::odfi::h2dl::Module rfg
-            
-            ## Register size in bits
-            +var registerSize 8 
-
-            ## Generic Builder
-            +builder {
-                puts "Builder for Interface"
-                :onBuildDone {
-
-                    ::puts "Done Build Interface, creating H2DL "
-
-                }
-            }
-
-        }
+        
 
         ## Hierarchy
         #####################
@@ -74,7 +61,7 @@ namespace eval odfi::rfg {
             ## RF Top interface, which is a group 
             :registerFile : Group name {
                 +exportTo RegisterFile
-                +exportTo Interface
+                #+exportTo Interface
                 +exportTo Group
                 +exportToPublic
                 +expose    name
@@ -84,10 +71,16 @@ namespace eval odfi::rfg {
 
                     ## Find Interface 
                     #############
-                    set interface [[:shade ::odfi::rfg::Interface getPrimaryParents] at 0]
-                    if {$interface==""} {
-                        error "Register File Cannot Map Addresses because the register size is required to generate correct address increment"
+                    ## Get Interface
+                    set interface [current object]
+                    if {![$interface isClass ::odfi::rfg::Interface]} {
+                        set interface [[:shade ::odfi::rfg::Interface getParentsRaw] at 0]
+                        if {$interface==""} {
+                            error "Register File Cannot Map Addresses because the register size is required to generate correct address increment"
+                        } 
                     }
+
+                    
 
                     ## Address increment in bytes
                     set registerIncrement [expr [$interface registerSize get]/8]
@@ -120,7 +113,123 @@ namespace eval odfi::rfg {
 
 
 
-        
+        ## Interface Wrapper
+        #################
+        :interface : ::odfi::h2dl::Module name {
+            +exportToPublic
+            +expose    name
+            +mixin ::odfi::attributes::AttributesContainer
+            +mixin RegisterFile
+            +exportTo ::odfi::h2dl::Module rfg
+            
+            ## Register size in bits
+            +var registerSize 8 
+
+            ## Generic Builder
+            +builder {
+                puts "Builder for Interface"
+                :onBuildDone {
+
+                    ::puts "Done Build Interface, creating H2DL "
+
+                }
+            }
+
+
+             +method h2dl:generate args {
+                puts "CREATE H2DL IN INTERFACE"
+
+                ## Map Addresses 
+                :mapAddresses
+
+                ## Find Interface 
+                #############
+                ## Get Interface
+                set interface [current object]
+                if {![$interface isClass ::odfi::rfg::Interface]} {
+                    set interface [[:shade ::odfi::rfg::Interface getParentsRaw] at 0]
+                    if {$interface==""} {
+                        error "Register File Cannot Map Addresses because the register size is required to generate correct address increment"
+                    } 
+                }
+
+                ## Get Size 
+                set rfSize [expr int(ceil([:getAttribute odfi::rfg::address size 0]/2)) ]
+
+                set rf [current object]
+
+                :module [:name get]_rf {
+                    
+                    ## SW IO 
+                    :input clk 
+                    :input res_n
+                    :input  read
+                    :output read_data {
+                        :width set [$interface registerSize get]
+                    }
+                    :input  write
+                    :input  write_data {
+                        :width set [$interface registerSize get]
+                    }
+                    :output done
+                    :input  address {
+                        :width set $rfSize
+                    }
+
+
+
+                    ## Register fields make up the IOs
+                    $rf walkDepthFirstPreorder -level 1 {
+
+                        if {[$node isClass odfi::rfg::Field]} {
+
+                            ## Output For hardware access
+                            set hReadWrite [$node getAttribute odi::rfg::hardware rw "rw"]
+                            :output [$node shade { return [expr [$it isClass odfi::rfg::Description] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[$node name get] {
+                                :width set [$node width get]
+                            }
+                            #:register [$node shade { return [expr [$it isClass odfi::rfg::Description] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[$node name get] {
+                            #    :width set [$node width get]
+                            #}
+
+                        }
+                        return true
+                    } 
+
+                    ## Instances
+                    #################
+
+
+                    ## Read 
+                    ####################
+                    :posedge $clk {
+                    #    :reset $res_n
+                        :case {$read $address} {
+                    
+                            $rf walkDepthFirstPreorder -level 1 {
+                                if {[$node isClass odfi::rfg::Register]} {
+                                    :on [$node name get] {
+                                        
+                                    }
+                                }
+                                return true
+                            }
+
+                        }
+                   }
+
+                    ## Write 
+                    ####################
+                    :posedge $clk {
+  #                      
+                    }
+
+                }
+                ## EOF MODULE 
+            }
+            ## EOF generate
+
+        }
 
         
 
