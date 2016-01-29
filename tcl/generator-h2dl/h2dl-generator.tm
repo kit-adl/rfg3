@@ -12,13 +12,26 @@ namespace eval odfi::rfg::generator::h2dl {
     odfi::language::Language default {
 
         :H2DLGenerator {
-
+            +exportTo ::odfi::rfg::Interface -prefix h2dl
 
             +method generate args {
                 puts "CREATE H2DL IN INTERFACE"
+
+                if {[:isClass odfi::rfg::Interface]} {
+                    :mapAddresses
+                }
+                ## Create Module 
+                set module [:toModule]
+
+                ## Add Instance 
+                set instance [:addChild [$module createInstance rfg_I]]
+
+                ## Push Up Registerss Interface
+                $instance pushUpInterface
+               
             }
 
-            ## Create an H2DL Module 
+            ## Create an H2DL Module for the register definitinos 
             +method toModule args {
 
                 ## Get Interface
@@ -170,7 +183,7 @@ namespace eval odfi::rfg::generator::h2dl {
 
     puts "ADDDING TO INTERFACE"
 
-    ::odfi::rfg::Interface domain-mixins add odfi::rfg::generator::h2dl::H2DLGenerator -prefix h2dl
+    #::odfi::rfg::Interface domain-mixins add odfi::rfg::generator::h2dl::H2DLGenerator -prefix h2dl
 
 
 }
