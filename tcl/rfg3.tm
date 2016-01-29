@@ -76,20 +76,28 @@ namespace eval odfi::rfg {
                     if {![$interface isClass ::odfi::rfg::Interface]} {
                         set interface [[:shade ::odfi::rfg::Interface getParentsRaw] at 0]
                         if {$interface==""} {
-                            error "Register File Cannot Map Addresses because the register size is required to generate correct address increment"
-                        } 
+                            odfi::log::warn "Not Interface found in RFG hierarchy, using default register width of 8"
+                            set registerSize 8
+                            #error "Register File Cannot Map Addresses because the register size is required to generate correct address increment"
+                        } else {
+                            ## Get Register Size 
+                            set registerSize [$interface registerSize get]
+                        }
+                    } else {
+                        ## Get Register Size 
+                        set registerSize [$interface registerSize get]                        
                     }
 
                     
 
                     ## Address increment in bytes
-                    set registerIncrement [expr [$interface registerSize get]/8]
+                    set registerIncrement [expr $registerSize/8]
                     set currentAddress 0
                     :walkDepthFirstPostorder {
 
                         if {[$node isClass odfi::rfg::Register]} {
-                            puts "On Register, current address is $currentAddress"
-                            $node attribute odfi::rfg::address absolute $currentAddress
+                            #puts "On Register, current address is $currentAddress"
+                            $node attribute ::odfi::rfg::address absolute $currentAddress
                             incr currentAddress $registerIncrement
                         }
 
@@ -106,7 +114,16 @@ namespace eval odfi::rfg {
                 +mixin ::odfi::attributes::AttributesContainer
                 :field : Description name {
                     +var width 1
+                    +var offset 0
                     +var reset 0
+                    
+                    ## Assign Offset based on previous 
+                    +builder {
+                        set previous [:shade odfi::rfg::Field getPreviousSibling]
+                        if {$previous!=""} {
+                            set :offset [expr [$previous offset get]+[$previous width get]]
+                        }
+                    }
                 }
             }
         }
