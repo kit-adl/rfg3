@@ -112,6 +112,19 @@ namespace eval odfi::rfg {
             ## Group Common 
             :register : Description name {
                 +mixin ::odfi::attributes::AttributesContainer
+
+                ## End of register, if no field, create a field with same name and width as register 
+                +builder {
+                    :onBuildDone {
+                        if {[:shade odfi::rfg::Field firstChild]==""} {
+                            :field $name {
+                                :width set -1
+                            }
+                        }
+                    }
+                }
+
+                ## Field 
                 :field : Description name {
                     +var width 1
                     +var offset 0
