@@ -49,7 +49,19 @@ namespace eval odfi::rfg {
             +mixin ::odfi::attributes::AttributesContainer
         }
 
-        
+        ## Interface Wrapper
+        #################
+        :interface : ::odfi::h2dl::Module name {
+            +exportToPublic
+            +expose    name
+            +exportTo ::odfi::h2dl::Module rfg
+            
+            ## Register size in bits
+            +var registerSize 8 
+
+   
+
+        }
 
         ## Hierarchy
         #####################
@@ -61,7 +73,7 @@ namespace eval odfi::rfg {
             ## RF Top interface, which is a group 
             :registerFile : Group name {
                 +exportTo RegisterFile
-                #+exportTo Interface
+                +exportTo Interface
                 +exportTo Group
                 +exportToPublic
                 +expose    name
@@ -143,32 +155,7 @@ namespace eval odfi::rfg {
 
 
 
-        ## Interface Wrapper
-        #################
-        :interface : ::odfi::h2dl::Module name {
-            +exportToPublic
-            +expose    name
-            +mixin ::odfi::attributes::AttributesContainer
-            +mixin RegisterFile
-            +exportTo ::odfi::h2dl::Module rfg
-            
-            ## Register size in bits
-            +var registerSize 8 
-
-            ## Generic Builder
-            +builder {
-                puts "Builder for Interface"
-                :onBuildDone {
-
-                    ::puts "Done Build Interface, creating H2DL "
-
-                }
-            }
-
-
-             
-
-        }
+       
 
         
 

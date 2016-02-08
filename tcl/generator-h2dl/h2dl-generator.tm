@@ -14,22 +14,26 @@ namespace eval odfi::rfg::generator::h2dl {
         :H2DLGenerator {
             +exportTo ::odfi::rfg::Interface h2dl
 
-            +method generate module_closure {
+            +method generate {{module_closure ""}} {
                 puts "CREATE H2DL IN INTERFACE"
 
-                if {[:isClass odfi::rfg::Interface]} {
-                    :mapAddresses
-                }
+                #if {[:isClass odfi::rfg::Interface]} {
+                #    :mapAddresses
+                #}
+
                 ## Create Module 
                 set module [:toModule2]
                 $module apply $module_closure 
 
                 ## Add Instance 
                 set instance [:addChild [$module createInstance rfg_I]]
+                :addChild $instance
                 ##$instance addChild $module
 
                 ## Push Up Registerss Interface
                 $instance pushUpInterface
+
+                return $instance
                
             }
 
@@ -61,15 +65,20 @@ namespace eval odfi::rfg::generator::h2dl {
                 ## Get Size
                 set rfSize [expr int(ceil([:getAttribute odfi::rfg::address size 0]/2)) ]
 
-                set rf [current object]
+                ## Get RF 
+                set rf [:shade odfi::rfg::RegisterFile firstChild]
+                if {$rf==""} {
+                    odfi::log::warn "Generating Interface without Register File" 
+                    return
+                }
 
                 ## Map to addresses if necessary
-                if {![:hasAttribute ::odfi::rfg::address absolute]} {
-                    :mapAddresses
+                if {![$rf hasAttribute ::odfi::rfg::address absolute]} {
+                    $rf mapAddresses
                 }
 
                 ## Create Module
-                set rfgModule [odfi::h2dl::module [:name get]_rf {
+                set rfgModule [odfi::h2dl::module [$rf name get]_rf {
 
                     ## SW IO
                     :input clk {
