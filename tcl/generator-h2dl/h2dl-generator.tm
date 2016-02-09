@@ -66,8 +66,7 @@ namespace eval odfi::rfg::generator::h2dl {
 
 
 
-                ## Get Size
-                set rfSize [expr int(ceil([:getAttribute odfi::rfg::address size 0]/2)) ]
+                
 
                 ## Get RF 
                 set rf [:shade odfi::rfg::RegisterFile firstChild]
@@ -76,10 +75,15 @@ namespace eval odfi::rfg::generator::h2dl {
                     return
                 }
 
+
                 ## Map to addresses if necessary
                 if {![$rf hasAttribute ::odfi::rfg::address absolute]} {
                     $rf mapAddresses
                 }
+
+
+                ## Get Size
+                set rfSize [$rf getAttribute ::odfi::rfg::address size 1]
 
                 ## Create Module
                 set rfgModule [odfi::h2dl::module [$rf name get]_rf]
