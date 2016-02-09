@@ -145,6 +145,7 @@ namespace eval odfi::rfg {
                     ## Assign Offset based on previous 
                     +builder {
                         set previous [:shade odfi::rfg::Field getPreviousSibling]
+                        
                         if {$previous!=""} {
                             set :offset [expr [$previous offset get]+[$previous width get]]
                         }

@@ -7,6 +7,9 @@ namespace eval odfi::rfg::generator::h2dl {
 
     nx::Class create H2DLSupport {
 
+        :public method h2dl:produce args {
+            return [next]
+        }
     }
 
     odfi::language::Language default {
@@ -24,6 +27,7 @@ namespace eval odfi::rfg::generator::h2dl {
                 ## Create Module 
                 set module [:toModule2]
                 $module apply $module_closure 
+                puts "Returned value: [$module info class]"
 
                 ## Add Instance 
                 set instance [:addChild [$module createInstance rfg_I]]
@@ -78,7 +82,8 @@ namespace eval odfi::rfg::generator::h2dl {
                 }
 
                 ## Create Module
-                set rfgModule [odfi::h2dl::module [$rf name get]_rf {
+                set rfgModule [odfi::h2dl::module [$rf name get]_rf]
+                $rfgModule apply {
 
                     ## SW IO
                     :input clk {
@@ -135,14 +140,23 @@ namespace eval odfi::rfg::generator::h2dl {
 
                         if {[$node isClass odfi::rfg::Register]} {
 
+                            set addWrite true 
+                            set addRead  true
+
                             ## Create Default Register , or use provided H2DL result
                             if {[$node isClass odfi::rfg::generator::h2dl::H2DLSupport]} {
-                                set h2dlNode [$node h2dl:produce]
+
+                                set h2dlNode [$node h2dl:produce [current object]]
                                 :addChild $h2dlNode
 
-                                puts "Supported H2Dl Register created module: [$h2dlNode info class]"
+                                puts "Supported H2Dl Register created: [$h2dlNode info class]"
                                 ## If the provided node is a module, then we can find special IOs for Interface
                                 if {[$h2dlNode isClass ::odfi::h2dl::Module]} {
+
+                                    set addWrite false 
+                                    set addRead  false
+
+
 
                                     $h2dlNode shade odfi::h2dl::IO eachChild {
                                         {io i} =>
@@ -185,58 +199,81 @@ namespace eval odfi::rfg::generator::h2dl {
                                     }
                                 }
 
-                            } else {
+                                ## If it is a write section 
+                                if {[$h2dlNode hasAttribute ::odfi::rfg writeSection]} {
 
-                                ## Add Std Reg
-                                #################
-
-                                set h2dlReg [:register [$node getHierarchyName] {
-                                    :width set $registerSize
-
-                                    ## Each Field creates an output
-                                    $node shade ::odfi::rfg::Field eachChild {
-
-                                        ## If Field has the same width as interface, adapt 
-                                        if {[$it width get]==-1} {
-                                            $it width set $registerSize
-                                        }
-
-                                        #:wire [:name get]_[$it name get]
-                                        set bitmap [uplevel 2 [list :bitMap "[expr  [$it width get]-1] <- [$it offset get]" [$it name get]]]
-                                        $bitmap apply {
-                                            #puts "Inside: [:info class]"
-                                            ${:wire} toOutput {
-                                                #puts "Adding attribute isData"
-                                                :attribute ::odfi::rfg isData 1
-                                            }
-                                        }
-                                    }
-                                }]
-
-                                ## Add Posedge for the register write  
-                                #############
-
-                                :posedge $clk {
-
-                                    #:doReset $res_n
-                                    :reset $res_n
-                                    :if {! $res_n} {
-                                        $h2dlReg <= 0
-                                    }
-                                    :else {
-
-                                        :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($write == 1)} {
-                                            $h2dlReg <= $write_data
-                                        }
-                                    }
-                                    
-
+                                    set addWrite false
 
                                 }
 
-                                $readIf apply {
-                                    :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
-                                        $read_data <= $h2dlReg
+                            } 
+
+                            if {$addWrite || $addRead} {
+
+                                ## Add Std Reg it was not created before
+                                #################
+                                set h2dlReg [:shade odfi::h2dl::Signal findChildByProperty name [$node getHierarchyName]]
+                                if {$h2dlReg==""} {
+                                    set h2dlReg [:register [$node getHierarchyName]] 
+                                    $h2dlReg apply {
+                                        :width set $registerSize
+
+                                        ## Each Field creates an output
+                                        $node shade ::odfi::rfg::Field eachChild {
+
+                                            ## If Field has the same width as interface, adapt 
+                                            if {[$it width get]==-1} {
+                                                $it width set $registerSize
+                                            }
+
+                                            #:wire [:name get]_[$it name get]
+                                            #puts "Field Bitmap -> [expr  [$it offset get]+[$it width get]-1] <- [$it offset get]"
+                                            set bitmap [$h2dlReg bitMap "[expr  [$it offset get]+[$it width get]-1] <- [$it offset get]" [$it name get]]
+                                            $bitmap apply {
+                                                $it addChild ${:wire}
+                                                #puts "Inside: [:info class]"
+                                                ${:wire} toOutput {
+                                                    #puts "Adding attribute isData"
+                                                    :attribute ::odfi::rfg isData 1
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                
+
+                                ## Add Posedge for the register write  
+                                #############
+                                if {$addWrite} {
+
+
+                                    :posedge $clk {
+
+                                        #:doReset $res_n
+                                        :reset $res_n
+                                        :if {! $res_n} {
+                                            $h2dlReg <= 0
+                                        }
+                                        :else {
+
+                                            :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($write == 1)} {
+                                                $h2dlReg <= $write_data
+                                            }
+                                        }
+                                        
+
+
+                                    }
+                                }
+
+                                if {$addRead} {
+
+
+                                    $readIf apply {
+                                        :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
+                                            $read_data <= $h2dlReg
+                                        }
                                     }
                                 }
                                 ## Read
@@ -276,7 +313,7 @@ namespace eval odfi::rfg::generator::h2dl {
                         return $resInstance
                     }
 
-                }]
+                }
 
                 return $rfgModule
 
