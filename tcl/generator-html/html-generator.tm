@@ -131,7 +131,7 @@ namespace eval odfi::rfg::generator::html {
                                         }
 
                                         :td {
-                                            :textContent 0x[format "%x" [$node getAttribute odfi::rfg::address absolute 0]]
+                                            :textContent 0x[format "%x" [$node getAttribute ::odfi::rfg::address absolute 0]]
                                         }
                                     }
 
