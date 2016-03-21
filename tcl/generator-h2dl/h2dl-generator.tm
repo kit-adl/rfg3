@@ -597,17 +597,17 @@ namespace eval odfi::rfg::generator::h2dl {
 
 
             ## If parent Module has an IO or Signal for clock, then use it 
-            set res [$parent shade odfi::h2dl::Signal @> children @>  findOption { $it hasAttribute ::odfi::rfg clock} ]
-            puts "Res: [$res info class]"
-             if {[$res isNone]} {
-                ${:clk} pushUp
-             } else {
-                ${:clk} connection [$res getContent]
-             }
+            #set res [$parent shade odfi::h2dl::Signal @> children @>  findOption { $it hasAttribute ::odfi::rfg clock} ]
+            #puts "Res: [$res info class]"
+            # if {[$res isNone]} {
+            #    ${:clk} pushUp
+            # } else {
+            #    ${:clk} connection [$res getContent]
+            # }
 
             
              ## Push Up RES 
-             ${:res_n} pushUp
+             #${:res_n} pushUp
 
              ## Push Up Standard Interface            
              :shade {return [expr [$it isClass odfi::h2dl::IO] && ![$it hasAttribute ::odfi::rfg::generator::h2dl internal]]} eachChild {
