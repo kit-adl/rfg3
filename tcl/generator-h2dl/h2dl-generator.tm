@@ -132,6 +132,9 @@ namespace eval odfi::rfg::generator::h2dl {
                             set readIf [:if {$read == 1} {
 
                             } ]
+                            :else {
+                                $done <= 0;
+                            }
                         }
                         
                     } ]
@@ -271,12 +274,14 @@ namespace eval odfi::rfg::generator::h2dl {
                                     }
                                 }
 
+                                ## Add Read Case 
                                 if {$addRead} {
 
 
                                     $readIf apply {
                                         :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
                                             $read_data <= $h2dlReg
+                                            $done <= 1
                                         }
                                     }
                                 }
