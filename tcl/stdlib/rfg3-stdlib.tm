@@ -164,7 +164,7 @@ namespace eval odfi::rfg::stdlib {
 odfi::language::nx::new ::odfi::rfg::xilinx {
 
     :fifo name {
-        +exportTo odfi::rfg::Group xilinx
+        +exportTo ::odfi::rfg::Group xilinx
         
         ## XILINX XCI Format support
         ###########

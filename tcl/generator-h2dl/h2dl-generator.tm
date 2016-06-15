@@ -245,6 +245,10 @@ namespace eval odfi::rfg::generator::h2dl {
                                         :width set $registerSize
 
                                         #### Each Field creates an output
+                                        #### If no fields, just propagate the output
+                                        if {[[$node shade ::odfi::rfg::Field children] size]==0} {
+                                            :toOutput
+                                        }
                                         $node shade ::odfi::rfg::Field eachChild {
 
                                             ## If Field has the same width as interface, adapt 
