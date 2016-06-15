@@ -163,8 +163,9 @@ namespace eval odfi::rfg::stdlib {
 
 odfi::language::nx::new ::odfi::rfg::xilinx {
 
-    :fifo name {
+    :fifo : ::odfi::rfg::Register name {
         +exportTo ::odfi::rfg::Group xilinx
+        +mixin      ::odfi::rfg::generator::h2dl::H2DLSupport
         
         ## XILINX XCI Format support
         ###########
@@ -178,9 +179,102 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
             
             ## Create Module based on file 
             ############
-            set fileContent [odfi::files::readFile $xciFile]
+            set fileContent [odfi::files::readFileContent $xciFile]
         
+            puts "Done XCI Reading"
+            
+            ## get Name
+            regexp {<spirit:instanceName>([\w_-]+)<\/spirit:instanceName>} $fileContent -> instanceName
+            
+            ## Prepare Module based on name 
+            set module [::odfi::h2dl::module $instanceName]
+            :addChild $module
+            
+            ## get depth
+            regexp {<spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.Output_Depth">([0-9]+)<\/spirit:configurableElementValue>} $fileContent -> depth
+            :attribute ::odfi::rfg::stdlib::fifo depth $depth
+            
+            ## First Word through 
+            set options [:spiritGetElementValue $fileContent PARAM_VALUE.Performance_Options]
+            if {[string match *First_Word_Fall_Through* $options]} {
+                :attribute ::odfi::rfg::stdlib::fifo fallthrough true
+            }
+            
+            ## IOs: Find data and address length
+            #######################
+            set fifoReg [current object]
+            
+            ## One or two clocks?
+            set independentClocks false 
+            if {[:spiritGetElementValue  $fileContent PARAM_VALUE.Fifo_Implementation]=="Independent_Clocks_Block_RAM"} {
+                set independentClocks true
+            } else {
+                $module input clk {
+                   :attribute ::odfi::rfg::h2dl clock true                  
+                }
+            }
+            
+            ## Reset?
+            if {[:spiritGetElementValue  $fileContent PARAM_VALUE.Reset_Pin]} {
+                $module input rst {
+                    :attribute ::odfi::rfg::h2dl reset true     
+                }
+            }
+            
+            ## Input 
+            $module input din {
+                :width set [$fifoReg spiritGetElementValue $fileContent PARAM_VALUE.Input_Data_Width]
+            }
+            $module input wr_en {
+                        
+            }
+            if {$independentClocks} {
+                $module input wr_clk {
+                  
+                }
+            }
+            
+            ## output 
+            $module output dout {
+                :width set [$fifoReg spiritGetElementValue $fileContent PARAM_VALUE.Output_Data_Width]
+                :attribute ::odfi::rfg::h2dl data_out true     
+            }
+            $module input rd_en {
+                :attribute ::odfi::rfg::h2dl read_enable true     
+            }
+            if {$independentClocks} {
+                $module input rd_clk {
+                  :attribute ::odfi::rfg::h2dl clock true    
+                }
+            }
+            
+            ## Full/empty
+            $module output full {
+            }
+            $module output empty {
+            }
+            
+            ## Almost empty
+            if {[:spiritGetElementValue  $fileContent PARAM_VALUE.Almost_Empty_Flag]} {
+                $module output almost_empty {
+                }
+            }
+            
+            ## Almost full
+            if {[:spiritGetElementValue  $fileContent PARAM_VALUE.Almost_Full_Flag]} {
+                $module output almost_full {
+                }
+            }
+            #puts "AFULL: $almostFull"
+            
+            
+        }
         
+        +method spiritGetElementValue {content name} {
+            regexp "<spirit:configurableElementValue spirit:referenceId=\"$name\">(\[\\w_-\]+)<\\/spirit:configurableElementValue>" $fileContent -> result
+            
+            return $result
+                        
         }
         
         ## H2DL  Producer 
