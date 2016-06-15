@@ -69,11 +69,17 @@ namespace eval odfi::rfg::generator::h2dl {
                 
 
                 ## Get RF 
-                set rf [:shade odfi::rfg::RegisterFile firstChild]
+                if {[[current object] isClass  odfi::rfg::RegisterFile]} {
+                    set rf [current object]
+                } else {
+                    set rf [:shade odfi::rfg::RegisterFile firstChild]
+                }
+                
                 if {$rf==""} {
-                    odfi::log::warn "Generating Interface without Register File" 
+                    odfi::log::error "Generating Interface without Register File" 
                     return
                 }
+                
 
 
                 ## Map to addresses if necessary
@@ -86,7 +92,12 @@ namespace eval odfi::rfg::generator::h2dl {
                 set rfSize [$rf getAttribute ::odfi::rfg::address size 1]
 
                 ## Create Module
-                set rfgModule [odfi::h2dl::module [$rf name get]_rf]
+                set moduleName [$rf name get]
+                if {![string match "*_rf" $moduleName]} {
+                    set moduleName "${moduleName}_rf"
+                }
+                set rfgModule [odfi::h2dl::module $moduleName]
+                
                 $rfgModule apply {
 
                     ## SW IO
@@ -147,8 +158,9 @@ namespace eval odfi::rfg::generator::h2dl {
 
                         if {[$node isClass odfi::rfg::Register]} {
 
-                            set addWrite true 
-                            set addRead  true
+                            set addWrite   true 
+                            set addRead    true
+                            set addHWWrite false
 
                             ## Create Default Register , or use provided H2DL result
                             if {[$node isClass odfi::rfg::generator::h2dl::H2DLSupport]} {
@@ -217,6 +229,13 @@ namespace eval odfi::rfg::generator::h2dl {
 
                             if {$addWrite || $addRead} {
 
+                                ## Check HW Rights
+                                ############
+                                if {[$node attributeMatch ::odfi::rfg hardware *rw*]} {
+                                    puts "ADDING HW WRITE"
+                                    set addHWWrite true
+                                }
+
                                 ## Add Std Reg it was not created before
                                 #################
                                 set h2dlReg [:shade odfi::h2dl::Signal findChildByProperty name [$node getHierarchyName]]
@@ -225,7 +244,7 @@ namespace eval odfi::rfg::generator::h2dl {
                                     $h2dlReg apply {
                                         :width set $registerSize
 
-                                        ## Each Field creates an output
+                                        #### Each Field creates an output
                                         $node shade ::odfi::rfg::Field eachChild {
 
                                             ## If Field has the same width as interface, adapt 
@@ -245,6 +264,8 @@ namespace eval odfi::rfg::generator::h2dl {
                                                 }
                                             }
                                         }
+                                        
+                                        #### if write rights; add an input
                                     }
                                 }
 
@@ -266,6 +287,23 @@ namespace eval odfi::rfg::generator::h2dl {
 
                                             :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($write == 1)} {
                                                 $h2dlReg <= $write_data
+                                            }
+                                            ## HW Write
+                                            if {$addHWWrite} {
+                                            
+                                                ## Create IOs for HW write
+                                                set hwWriteInput [$rfgModule input [$h2dlReg name get]_hw {
+                                                    :width set [$h2dlReg width get]
+                                                    :attribute ::odfi::rfg isData 1
+                                                }]
+                                                set hwWriteInputEnable [$rfgModule input [$h2dlReg name get]_hw_write {
+                                                    :attribute ::odfi::rfg isData 1
+                                                }]
+                                                
+                                                ## Add Else if write condition
+                                                :elseif {$hwWriteInputEnable == 1} {
+                                                    $h2dlReg <= $hwWriteInput
+                                                }
                                             }
                                         }
                                         
@@ -597,7 +635,8 @@ namespace eval odfi::rfg::generator::h2dl {
             ## Get parent 
             set parent [:shade odfi::h2dl::Module parent]
             if {$parent==""} {
-                error "Cannot push up interface of RFG instance if no H2Dl parent exists"
+                odfi::log::info "Cannot push up interface of RFG instance if no H2Dl parent exists"
+                return
             }
 
 
@@ -631,6 +670,6 @@ namespace eval odfi::rfg::generator::h2dl {
 
 
     ::odfi::rfg::Interface domain-mixins add odfi::rfg::generator::h2dl::H2DLGenerator -prefix h2dl
-    #::odfi::rfg::RegisterFile domain-mixins add odfi::rfg::generator::h2dl::H2DLGenerator -prefix h2dl
+    ::odfi::rfg::RegisterFile domain-mixins add odfi::rfg::generator::h2dl::H2DLGenerator -prefix h2dl
 
 }

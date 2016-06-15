@@ -16,21 +16,39 @@
 	<!-- SCM -->
 	<!-- #### -->
 	<scm>
-		<connection>scm:git:git@github.com:unihd-cag/odfi-rfg.git</connection>
-		<developerConnection>scm:git:git@github.com:unihd-cag/odfi-rfg.git</developerConnection>
-		<url>https://github.com/unihd-cag/odfi-rfg</url>
+		<connection>scm:git:git@github.com:kit-adl/rfg3.git</connection>
+		<developerConnection>scm:git:git@github.com:kit-adl/rfg3.git</developerConnection>
+		<url>https://github.com/kit-adl/rfg3</url>
 		<tag>HEAD</tag>
 	</scm>
 
 	<build>
 		<plugins>
+<!-- 			<plugin> -->
+<!-- 				<groupId>net.alchim31.maven</groupId> -->
+<!-- 				<artifactId>scala-maven-plugin</artifactId> -->
+<!-- 				<configuration> -->
+<!-- 					<useZincServer>true</useZincServer> -->
+<!-- 					<addZincArgs>-no-color</addZincArgs> -->
+<!-- 				</configuration> -->
+<!-- 				<executions> -->
+<!-- 					<execution> -->
+<!-- 						<id>add-source</id> -->
+<!-- 						<phase>generate-sources</phase> -->
+<!-- 						<goals> -->
+<!-- 							<goal>add-source</goal> -->
+<!-- 						</goals> -->
+<!-- 						<configuration> -->
+<!-- 							<sourceDir>${basedir}/target/generated-sources/scala</sourceDir> -->
+<!-- 						</configuration> -->
+<!-- 					</execution> -->
+<!-- 				</executions> -->
+<!-- 			</plugin> -->
+			
 			<plugin>
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<configuration>
-					<useZincServer>true</useZincServer>
-					<addZincArgs>-no-color</addZincArgs>
-				</configuration>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.9.1</version>
 				<executions>
 					<execution>
 						<id>add-source</id>
@@ -39,11 +57,26 @@
 							<goal>add-source</goal>
 						</goals>
 						<configuration>
-							<sourceDir>${basedir}/target/generated-sources/scala</sourceDir>
+							<sources>
+								<source>${project.build.directory}/generated-sources/scala</source>
+							</sources>
+						</configuration>
+					</execution>
+					<execution>
+						<phase>pre-site</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${project.build.directory}/generated-sources/scala</source>
+							</sources>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
+			
+			
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-ooxoo-plugin</artifactId>
@@ -214,11 +247,11 @@
 	<!-- </distributionManagement> -->
 
 	<dependencies>
-		<dependency>
-			<groupId>com.idyria.osi.aib</groupId>
-			<artifactId>aib-core</artifactId>
-			<version>3.1.0</version>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.idyria.osi.aib</groupId> -->
+<!-- 			<artifactId>aib-core</artifactId> -->
+<!-- 			<version>3.1.0</version> -->
+<!-- 		</dependency> -->
 		<dependency>
 			<groupId>com.idyria.osi.ooxoo</groupId>
 			<artifactId>ooxoo-core</artifactId>

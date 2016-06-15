@@ -17,8 +17,8 @@ odfi::rfg::registerfile example_rf {
             
                     :width set 8
                     :reset set 8'd0
-                    :attribute odfi::rfg::hardware rw rw
-                    :attribute odfi::rfg::software rw rw
+                    :attribute ::odfi::rfg hardware  rw
+                    :attribute ::odfi::rfg software  rw
                    
                 }
             }
@@ -27,15 +27,10 @@ odfi::rfg::registerfile example_rf {
 
         range 2 4 {
             :register scratchpad$i {
-
-                :field value {
             
-                    :width set 8
-                    :reset set 8'd0
-                    :attribute odfi::rfg::hardware rw ro
-                    :attribute odfi::rfg::software rw rw
-                   
-                }
+            
+                :attribute ::odfi::rfg hardware rw
+                
             }
 
         }
@@ -50,15 +45,19 @@ odfi::rfg::registerfile example_rf {
         :register id {
             :description set "A runtime ID to be set, non persistent"
         }
-
-        :stdlib:fifo test_fifo {
-            :width set 48
-            :useXilinxSimpleFifo
-            
+        
+        return
+        :ignore {
+        
+            :stdlib:fifo test_fifo {
+                :width set 48
+                :useXilinxSimpleFifo
+                
+            }
         }
 
     }
 
 }
 
-[$example_rf h2dl:toModule] verilog:produce verilog.gen
+[$example_rf h2dl:generate] verilog:produce [file dirname [info script]]/verilog.gen

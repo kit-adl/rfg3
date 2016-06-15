@@ -1,10 +1,10 @@
-package uni.hd.cag.osys.rfg.rf2.bulk
+package kit.ipe.adl.rfg3.bulk
 
 import org.scalatest.FunSuite
-import uni.hd.cag.osys.rfg.rf2.device.Device
-import uni.hd.cag.osys.rfg.rf2.language.DummyRegisterfileHost
-import uni.hd.cag.osys.rfg.rf2.language.RFLanguage
-import uni.hd.cag.osys.rfg.rf2.model.RegisterFile
+import kit.ipe.adl.rfg3.device.Device
+import kit.ipe.adl.rfg3.language.DummyRegisterfileHost
+import kit.ipe.adl.rfg3.language.RFLanguage
+import kit.ipe.adl.rfg3.model.RegisterFile
 import com.idyria.osi.ooxoo.core.buffers.extras.transaction.Transaction
 import org.scalatest.GivenWhenThen
 

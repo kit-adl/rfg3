@@ -133,9 +133,9 @@ namespace eval odfi::rfg {
                 +builder {
                     :onBuildDone {
                         if {[:shade odfi::rfg::Field firstChild]==""} {
-                            :field $name {
-                                :width set -1
-                            }
+                            #:field $name {
+                            #    :width set -1
+                            #}
                         }
                     }
                 }
@@ -150,7 +150,7 @@ namespace eval odfi::rfg {
                     +builder {
                         set previous [:shade odfi::rfg::Field getPreviousSibling]
 
-                        if {$previous!=""} {
+                        if {$previous!="" && [$previous isClass odfi::rfg::Field] } {
                             set :offset [expr [$previous offset get]+[$previous width get]]
                         }
                     }

@@ -2,6 +2,8 @@ package provide odfi::rfg::stdlib  3.0.0
 package require odfi::rfg 3.0.0
 package require odfi::rfg::generator::h2dl 3.0.0
 package require odfi::richstream 3.0.0
+package require odfi::language::nx 1.0.0
+
 #set width 64
 #puts "power of 2 for $width : [expr 2**int(ceil(log($width)/log(2)))] -> [expr 2**6] "
 #exit 0
@@ -137,6 +139,7 @@ namespace eval odfi::rfg::stdlib {
                 #$fifoModule
 
             }
+            
 
             ## H2DL  Producer 
             +method h2dl:produce args {
@@ -154,5 +157,45 @@ namespace eval odfi::rfg::stdlib {
 
     }
 
+
+}
+
+
+odfi::language::nx::new ::odfi::rfg::xilinx {
+
+    :fifo name {
+        +exportTo odfi::rfg::Group xilinx
+        
+        ## XILINX XCI Format support
+        ###########
+        +method useXilinxXCIFifo xciFile {
+        
+            ## Checks
+            #############
+            if {![file exists $xciFile]} {
+                odfi::log::error "Xilinx FIFO XCI $xciFile does not exist"
+            }
+            
+            ## Create Module based on file 
+            ############
+            set fileContent [odfi::files::readFile $xciFile]
+        
+        
+        }
+        
+        ## H2DL  Producer 
+        +method h2dl:produce args {
+
+            
+            set childInstance [:shade odfi::h2dl::Module child 0]
+            if {$childInstance!=""} {
+                return $childInstance
+            }
+            error "Producing H2DL on Stdlib FIFO has no default implementation"
+
+        }
+        
+        
+    }
 
 }
