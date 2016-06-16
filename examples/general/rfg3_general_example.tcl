@@ -34,6 +34,25 @@ odfi::rfg::registerfile example_rf {
             }
 
         }
+        
+        :register readwritetest {
+        
+            :field a {
+            
+            }
+            
+            :field b {
+                :attribute ::odfi::rfg hardware rw
+            }
+            
+            :field c {
+            
+            }
+            
+            :field d {
+                :attribute ::odfi::rfg hardware rw
+            }
+        }
 
         :register global {
             :description set "Glocal ASIC Control Register"

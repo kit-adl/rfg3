@@ -162,6 +162,7 @@ namespace eval odfi::rfg::generator::h2dl {
                             set addWrite   true 
                             set addRead    true
                             set addHWWrite false
+                            set addHWWriteFields false
 
                             ## Create Default Register , or use provided H2DL result
                             if {[$node isClass odfi::rfg::generator::h2dl::H2DLSupport]} {
@@ -262,9 +263,24 @@ namespace eval odfi::rfg::generator::h2dl {
 
                                 ## Check HW Rights
                                 ############
+                                
+                                ## IF Register has an attribute rw for hardware, we should add the HWWrite block
+                                ## If any field has the HW Write; same thing
                                 if {[$node attributeMatch ::odfi::rfg hardware *rw*]} {
-                                    puts "ADDING HW WRITE"
+                                    #puts "ADDING HW WRITE"
                                     set addHWWrite true
+                                }
+                                
+                                set foundWriteField [[$node shade odfi::rfg::Field children] findOption {
+                                    if {[$it attributeMatch ::odfi::rfg hardware *rw*]} {
+                                        return true
+                                    } else {
+                                        return false 
+                                    }
+                                }]
+                                if {[$foundWriteField isDefined]} {
+                                    set addHWWrite true
+                                    set addHWWriteFields true
                                 }
 
                                 ## Add Std Reg it was not created before
@@ -298,6 +314,8 @@ namespace eval odfi::rfg::generator::h2dl {
                                                     :attribute ::odfi::rfg isData 1
                                                 }
                                             }
+                                            
+                                            
                                         }
                                         
                                         #### if write rights; add an input
@@ -324,21 +342,88 @@ namespace eval odfi::rfg::generator::h2dl {
                                                 $h2dlReg <= $write_data
                                             }
                                             ## HW Write
+                                            ################
                                             if {$addHWWrite} {
                                             
-                                                ## Create IOs for HW write
-                                                set hwWriteInput [$rfgModule input [$h2dlReg name get]_hw {
-                                                    :width set [$h2dlReg width get]
-                                                    :attribute ::odfi::rfg isData 1
-                                                }]
                                                 set hwWriteInputEnable [$rfgModule input [$h2dlReg name get]_hw_write {
-                                                    :attribute ::odfi::rfg isData 1
-                                                }]
+                                                   :attribute ::odfi::rfg isData 1
+                                               }]
+                                               ## Add Else if write condition
+                                               :elseif {$hwWriteInputEnable == 1} {
+                                               
+                                                    ## Full Register update or Field based update
+                                                    if {!$addHWWriteFields} {
+                                                        
+                                                        ## Create Register Input for HW write
+                                                        set hwWriteInput [$rfgModule input [$h2dlReg name get]_hw {
+                                                            :width set [$h2dlReg width get]
+                                                            :attribute ::odfi::rfg isData 1
+                                                        }]
+                                                        $h2dlReg <= $hwWriteInput
+                                                        
+                                                    } else {
+                                                    
+                                                        set hwWriteWire [$rfgModule wire [$h2dlReg name get]_hw {
+                                                            :width set [$h2dlReg width get]
+                                                            :attribute ::odfi::rfg isData 1
+                                                        }]
+                                                        
+                                                        set concatExpr [::odfi::h2dl::ast::ASTConcat new]
+                                                                                                            
+                                                        ## Create an input per write field
+                                                        $node shade odfi::rfg::Field eachChildReverse {
+                                                        
+                                                            ## If hardware write; concat with input wire;
+                                                            ## otherwise use reg value
+                                                            if {[$it attributeMatch ::odfi::rfg hardware *w*]} {
+                                                                
+                                                                set fieldInput [$rfgModule input [$h2dlReg name get]_[$it name get]_hw {
+                                                                    :width set [$it width get]
+                                                                    :attribute ::odfi::rfg isData 1
+                                                                }]
+                                                                
+                                                                #if {[$it width get]==1} {
+                                                                #    
+                                                                #} else {
+                                                                #    lappend exprRes [list $it @ [expr [$it offset get]+[$it width get]-1] <- [$it offset get]]
+                                                                #}
+                                                                
+                                                                #lappend exprRes [list $it]
+                                                                #lappend exprRes ,
+                                                                $concatExpr addChild $fieldInput
+                                                                
+                                                                
+                                                               # set fieldInputBitMap [$hwWriteWire bitMap "[expr  [$it offset get]+[$it width get]-1] <- [$it offset get]" [$it name get]]
+                                                                #$fieldInputBitMap apply {
+                                                                #    ${:wire} toInput {
+                                                                #        #puts "Adding attribute isData"
+                                                                 #       :attribute ::odfi::rfg isData 1
+                                                                 #   }
+                                                                #}
+                                                            } else {
+                                                                
+                                                                $concatExpr addChild [::odfi::h2dl::ast::buildAST $h2dlReg @ [expr [$it offset get]+[$it width get]-1] <- [$it offset get]]
+                                                                
+                                                                #lappend exprRes [list $h2dlReg @ [expr [$it offset get]+[$it width get]-1] <- [$it offset get]]
+                                                                #lappend exprRes ,
+                                                                
+                                                            }
+                                                        }
+                                                        
+                                                        #set finalExpr [lrange $exprRes 0 end-1]
+                                                        #puts "**** Final Expression : $finalExpr -> [llength $finalExpr]"
+                                                        $h2dlReg <= $concatExpr
+                                                        #exit
+                                                    
+                                                    }
+                                               
+                                                   
+                                               }
+                                               
+                                               
+                                               
                                                 
-                                                ## Add Else if write condition
-                                                :elseif {$hwWriteInputEnable == 1} {
-                                                    $h2dlReg <= $hwWriteInput
-                                                }
+                                                
                                             }
                                         }
                                         
@@ -346,6 +431,7 @@ namespace eval odfi::rfg::generator::h2dl {
 
                                     }
                                 }
+                                ## EOF Write
 
                                 ## Add Read Case 
                                 #################
@@ -359,15 +445,7 @@ namespace eval odfi::rfg::generator::h2dl {
                                         }
                                     }
                                 }
-                                ## Read
-                                #$testCase on "{[$node getAttribute ::odfi::rfg::address absolute],1,0}" {
-                                #    $read_data <= $h2dlReg
-                                #    $done <= 1
-                                #}
-                                #$testCase on "{[$node getAttribute ::odfi::rfg::address absolute],0,1}" {
-                                #    $h2dlReg <= $write_data
-                                #    $done <= 1
-                                #}
+                          
 
                             }
 
