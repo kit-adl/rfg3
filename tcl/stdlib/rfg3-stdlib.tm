@@ -188,6 +188,7 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
             
             ## Prepare Module based on name 
             set module [::odfi::h2dl::module $instanceName]
+            $module attribute ::odfi::h2dl blackbox true
             :addChild $module
             
             ## get depth
@@ -217,7 +218,7 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
             ## Reset?
             if {[:spiritGetElementValue  $fileContent PARAM_VALUE.Reset_Pin]} {
                 $module input rst {
-                    :attribute ::odfi::rfg::h2dl reset true     
+                    :attribute ::odfi::rfg::h2dl reset posedge     
                 }
             }
             

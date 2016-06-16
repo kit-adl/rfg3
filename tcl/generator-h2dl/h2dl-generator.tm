@@ -189,7 +189,14 @@ namespace eval odfi::rfg::generator::h2dl {
                                             if {[$io hasAttribute ::odfi::rfg::h2dl clock]} {
                                                 $io connection $clk
                                             } elseif {[$io hasAttribute ::odfi::rfg::h2dl reset]} {
-                                                $io connection $res_n
+                                                
+                                                if {[$io getAttribute ::odfi::rfg::h2dl reset]=="posedge"} {
+                                                    $io connection "![$res_n name get]"
+                                                } else {
+                                                    $io connection "$res_n"
+                                                }
+                                                
+                                                
                                             } elseif {[$io hasAttribute ::odfi::rfg::h2dl read_enable]} {
 
                                                 ## Read is controled by test case
