@@ -1,0 +1,18 @@
+
+## Add Template
+puts "Inside site file"
+package require odfi::duckdoc::templates::odfi
+
+set :siteName "RFG3"
+
+:odfi:common default {
+    puts "Creating default template"
+}
+
+
+## Gather and produce
+:gather
+
+
+
+:@> getTemplate default @> toHTML [file dirname [info script]]/index.html
