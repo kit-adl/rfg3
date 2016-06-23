@@ -55,9 +55,54 @@ namespace eval odfi::rfg {
             +exportToPublic
             +expose    name
             +exportTo ::odfi::h2dl::Module rfg
+            +var instanceName ""
             
             ## Register size in bits
             +var registerSize 8 
+            
+            +builder {
+                
+                ## Use class name for module name
+                ## Main name is the instance name
+                #puts "Class Name: [:info class]"
+                set :instanceName [:name get]
+               
+                
+                ## Add to Container Module
+                ## Do this at the end to let implementation builders have time to work
+                :onBuildDone {
+                    puts "Inside Interface builder with parent: [:parent]"
+                    set p [:parent]
+                    if {$p!="" && [$p isClass ::odfi::h2dl::Module]} {
+                        set instance [:createInstance ${:instanceName}]
+                        $p addChild $instance
+                    }
+                }
+                
+                
+            
+            }
+            ## EOF Builder
+            
+            ## Push Signals marked as external
+            ## Useful for external Chip Interface to be easily connected
+            +method pushExternal args {
+            
+                ## get interface instance
+                set p [:parent]
+                if {$p!="" && [$p isClass ::odfi::h2dl::Module]} {
+                    set instance [$p shade ::odfi::h2dl::Instance findChildByProperty name ${:instanceName}]
+                    if {$instance!=""} {
+                        $instance shade ::odfi::h2dl::IO eachChild {
+                            if {[$it hasAttribute ::odfi::rfg::h2dl external]} {
+                                $it pushUp
+                            }
+                        }
+                    }
+                    
+                }
+            
+            }
 
    
 

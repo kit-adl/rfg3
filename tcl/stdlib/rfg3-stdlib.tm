@@ -161,11 +161,20 @@ namespace eval odfi::rfg::stdlib {
 }
 
 
+## Xilinx Stuff
+##########################
+
 odfi::language::nx::new ::odfi::rfg::xilinx {
 
     :fifo : ::odfi::rfg::Register name {
         +exportTo ::odfi::rfg::Group xilinx
         +mixin      ::odfi::rfg::generator::h2dl::H2DLSupport
+        
+        +var softReset false
+        
+        +method useSoftReset args {
+            set :softReset true
+        }
         
         ## XILINX XCI Format support
         ###########
@@ -218,7 +227,12 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
             ## Reset?
             if {[:spiritGetElementValue  $fileContent PARAM_VALUE.Reset_Pin]} {
                 $module input rst {
-                    :attribute ::odfi::rfg::h2dl reset posedge     
+                    :attribute ::odfi::rfg::h2dl reset posedge  
+                    
+                    if {${:softReset}} {
+                        :attribute ::odfi::rfg::h2dl soft_reset true
+                    }   
+                         
                 }
             }
             
