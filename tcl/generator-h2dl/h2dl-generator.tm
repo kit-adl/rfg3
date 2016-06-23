@@ -133,21 +133,23 @@ namespace eval odfi::rfg::generator::h2dl {
 
                     ## Create Read posedge  
                     set readIf ""
-                    set readElse ""
+                    set readMain ""
+                    set readReset ""
                     set readPosedge [:posedge $clk {
                         
-                        :if {! $res_n} {
+                        set readReset [:if {! $res_n} {
                             $read_data <= 0
                             $done <= 0
-                        }
-                        :else {
+                        }]
+                        set readMain [:else {
                             set readIf [:if {$read == 1} {
 
                             } ]
                             :else {
+                            
                                 $done <= 0;
                             }
-                        }
+                        }]
                         
                     } ]
 
@@ -223,13 +225,20 @@ namespace eval odfi::rfg::generator::h2dl {
                                                 
                                             } elseif {[$io hasAttribute ::odfi::rfg::h2dl read_enable]} {
 
-                                                ## Read is controled by test case
+                                                ## Add read enable to module to control this module
+                                                ##########
                                                 set read_enable [$rfgModule register [$node getHierarchyName]_read_enable]
                                                 $io connection $read_enable
                                                 
+                                                ## don't forget reset
+                                                $readReset apply {
+                                                    $read_enable <= 0
+                                                }
+                                                
                                                 ## This module's read is controled separately from other regs to make sure read_enable is always 
                                                 ## reset correctly
-                                                $readPosedge apply {
+                                                ## Read Else is the main clock in read posedge
+                                                $readIf apply {
                                                     :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
                                                     
                                                         ## Map Read data to module out
@@ -249,7 +258,7 @@ namespace eval odfi::rfg::generator::h2dl {
                                                         $read_enable <= 1
                                                         
                                                         ## Set Done 
-                                                        #$done <= 1
+                                                        $done <= 1
                                                     }
                                                     :else {
                                                         ## set read to 0
