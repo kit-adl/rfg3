@@ -6,7 +6,7 @@
                     
                 <title >
 
-                    RFG3 :: Welcome to RFG3
+                    RFG3 :: syntax-index.md
                 </title>
             
  
@@ -117,54 +117,7 @@
  
                 <div  id="content" >
 
-                     <h1>Register File Generators (RFG) 3 </h1>
-
-<p>RFG is a small tcl tool used to describe a set a registers needed in a hardware design, and generate
-the appropriate documentation and hardware description in Verilog to rapidly read and write the registers from
-the hardware and software components.</p>
-
-<p>RFG features enable customisation of the register implementation for special common use cases like FIFOs, counters etc...</p>
-
-<p>RFG3 is based on the newest Language Definition API from the ODFI library and the NX scripting language.
-If you are looking for the actual most featured version, have a look at RFG2 maintained at the University of Heidelberg.</p>
-
-<h2>Installation</h2>
-
-<p>To use RFG3, you can install the TCL release and its dependencies using the ODFI manager, or use a single file release.</p>
-
-<p>Single File Releases are available at: <a href="&quot;https://www.idyria.com/access/osi/files/builds/tcl/&quot;">https://www.idyria.com/access/osi/files/builds/tcl/</a></p>
-
-<p>The Single File Release is an all-in-one TCL interpreter which you can use to run and RFG script.</p>
-
-<h2>Quick Start</h2>
-
-<p>RFG usage is based on a single script, from which you can make calls to the API to describe the registers and generate the outputs.
-This method enables a simple usage by just writting a TCL file and running it, or embedding  easily into any existing script flow.</p>
-
-<p>Assuming you are using a single file release executable, which you have renamed as &quot;rfg&quot;</p>
-
-<p>overview.tcl:</p>
-
-<pre><code>## Loading package is required
-package require odfi::rfg 3.0.0
-
-## Now Create the Register File Description
-set test true
-</code></pre>
-
-<p>Now run this script through the RFG TCL interpreter:</p>
-
-<blockquote>
-<p>rfg overview.tcl</p>
-</blockquote>
-
-<p>You should see the output:</p>
-
-<ul>
-<li>first_rfg.v
-</li></ul>
-
-<p>Which contains your register with a read and write interface</p>
+                     <h1>Syntax Reference</h1>
                 </div>
             
 

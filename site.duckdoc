@@ -1,9 +1,13 @@
 
+## Parameters
+set :siteName "RFG3"
+:attribute ::odfi::common github https://github.com/kit-adl/rfg3
+
 ## Add Template
 puts "Inside site file"
 package require odfi::duckdoc::templates::odfi
 
-set :siteName "RFG3"
+
 
 :odfi:common default {
     puts "Creating default template"
@@ -11,8 +15,10 @@ set :siteName "RFG3"
 
 
 ## Gather and produce
-:gather
+set :contentFolder [file dirname [info script]]/_content
 
+## Define output
+set :outputFolder [file dirname [info script]]
 
-
-:@> getTemplate default @> toHTML [file dirname [info script]]/index.html
+#:gather
+#:@> getTemplate default @> toHTML [file dirname [info script]]/
