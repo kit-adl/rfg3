@@ -28,6 +28,15 @@ odfi::rfg::registerfile example_rf {
             
         }
         
+        :xilinx:fifo test_fifo2 {
+                    
+            ## To be used before XCI read
+            :useSoftReset
+            :useXilinxXCIFifo [file dirname [info script]]/ip/fifo_generator_0/fifo_generator_0.xci
+            :addStatusRegister
+            :addPositionRegister
+        }
+        
 
     }
 

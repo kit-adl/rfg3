@@ -39,7 +39,7 @@ namespace eval odfi::rfg {
 
             +method getHierarchyName {{separator _}} {
 
-                return [:shade { return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[$node name get]
+                return [:shade { return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[:name get]
 
             }
         }
@@ -183,6 +183,17 @@ namespace eval odfi::rfg {
                             #}
                         }
                     }
+                }
+                
+                +method getWidth args {
+                    
+                    set sum 0
+                    [:shade ::odfi::rfg::Field children] @> map {return [$it width get]} @> foreach {
+                        set sum [expr $sum + $it]
+                    }
+                    
+                    
+                    return $sum
                 }
 
                 ## Field 

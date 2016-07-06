@@ -292,6 +292,147 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
                         
         }
         
+        ## Add Status Register
+        +method addStatusRegister args {
+            
+            #:onBuildDone {
+                
+                puts "*** ADDING SR"
+                
+                ## Get FIFO Module
+                set fifoModule [:shade ::odfi::h2dl::Module firstChild]
+                if {$fifoModule==""} {
+                    error "Cannot use addStatusRegister if FIFO module has not been prepared"
+                }
+                
+                ## Add Status Register to parent container
+                set parent [:parent]
+                set statusRegister [$parent register [:name get]_status {
+                    :attribute ::odfi::rfg::hardware hide true
+                }]
+                
+                ## Add Fields with features
+                set registerAssignList {}
+                set searchList {full empty almost_full almost_empty}
+                foreach search $searchList {
+                    set io [$fifoModule shade ::odfi::h2dl::IO findChildByProperty name $search]
+                    if {$io!=""} {
+                        $statusRegister field $search
+                        lappend registerAssignList [:getHierarchyName]_$search
+                    }
+                }
+               
+               
+                
+                
+                ## Add Produce method to replace write section
+                $statusRegister object mixins add ::odfi::rfg::generator::h2dl::H2DLSupport
+                $statusRegister object variable registerAssignList $registerAssignList
+                $statusRegister object method h2dl:produce args {
+                    next
+                    set targetReg [current object]
+                    set targetH2LDReg [$rfgModule register [$targetReg getHierarchyName] {
+                        :width set [$targetReg getWidth]
+                    }]
+                    set section [::odfi::h2dl::section::logicsection writeSection {
+                        :attribute ::odfi::rfg writeSection true
+                        
+                        :posedge $clk {
+                            :if {! $res_n} {
+                                $targetH2LDReg <= 0
+                            } 
+                            :else {
+                                
+                                $targetH2LDReg <= "[join [lreverse ${:registerAssignList}] ,]"
+                            }
+                        }
+                        
+                    }]
+                    
+                    return $section
+                }
+                
+                
+           # }
+        
+        }
+        
+        ## Add Status Register
+        +method addPositionRegister args {
+            
+            #:onBuildDone {
+                
+                puts "*** ADDING PositionSR"
+                
+                ## Get FIFO Module
+                set fifoModule [:shade ::odfi::h2dl::Module firstChild]
+                if {$fifoModule==""} {
+                    error "Cannot use addStatusRegister if FIFO module has not been prepared"
+                }
+                
+                ## Get DIN and DOUT
+                ## If not assymetric; issue a warning and don't produce
+                set din [$fifoModule shade ::odfi::h2dl::IO findChildByProperty name din]
+                set dout [$fifoModule shade ::odfi::h2dl::IO findChildByProperty name dout]
+                
+                if {[$din width get] == [$dout width get]} {
+                    ::odfi::log::warning "FIFO Position register is useless if din and dout have the same size"
+                } else {
+                    
+                    ## Add Position Register to parent container
+                    set parent [:parent]
+                    set positionRegister [$parent register [:name get]_status {
+                        :attribute ::odfi::rfg::hardware hide true
+                    }]
+                    
+                    ## Add So many bits as din/dout difference
+                    set bitsCount [expr [$din width get] / [$dout width get]]
+                    ::repeat $bitsCount {
+                        $positionRegister field p$i
+                    }
+                    
+                    ## Add Produce method to replace write section
+                    set fifoReg [current object]
+                    $positionRegister object mixins add ::odfi::rfg::generator::h2dl::H2DLSupport
+                    $positionRegister object variable relatedFifoReg [current object]
+                    $positionRegister object method h2dl:produce args {
+                        next
+                        set targetReg [current object]
+                        set targetH2LDReg [$rfgModule register [$targetReg getHierarchyName] {
+                            :width set [$targetReg getWidth]
+                        }]
+                        set section [::odfi::h2dl::section::logicsection writeSection {
+                            :attribute ::odfi::rfg writeSection true
+                            
+                            :posedge $clk {
+                                :if {! $res_n} {
+                                    $targetH2LDReg <= 1
+                                } 
+                                :else {
+                                    
+                                    :if "[${:relatedFifoReg} getHierarchyName]_read_enable" {
+                                        $targetH2LDReg <= "( $targetH2LDReg << 1) , ( $targetH2LDReg @ [expr [$targetH2LDReg width get] - 1 ] ) "
+                                    }
+                                    
+                                }
+                            }
+                            
+                        }]
+                        
+                        return $section
+                    }
+                    
+                
+                }
+                
+                
+                
+                
+                
+           # }
+        
+        }
+        
         ## H2DL  Producer 
         +method h2dl:produce args {
 

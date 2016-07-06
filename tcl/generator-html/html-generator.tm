@@ -34,9 +34,11 @@ namespace eval odfi::rfg::generator::html {
                         #file copy -force ${odfi::rfg::generator::html::location}/semantic.min.js $folder/semantic.min.js
                         #file copy -force ${odfi::rfg::generator::html::location}/semantic.min.css $folder/semantic.min.css
                         
-                        catch {file copy -force ${odfi::rfg::generator::html::location}/semantic-ui $folder}
-                        :stylesheet semantic-ui/semantic.min.css
+                        catch {file copy -force ${::odfi::rfg::generator::html::location}/semantic-ui $folder}
+                        
+                        :javascript jquery-2.1.4.min.js 
                         :javascript semantic-ui/semantic.min.js 
+                        :stylesheet semantic-ui/semantic.min.css
                        
 
 
@@ -72,7 +74,7 @@ namespace eval odfi::rfg::generator::html {
                                 
                                 :a $text #$id {
                                     :@* aria-controls=$id role=tab data-toggle=tab
-                                   # :textContent $text
+                                   # :text $text
                                 }
                             
                             }
@@ -123,15 +125,15 @@ namespace eval odfi::rfg::generator::html {
 
                                     $table tr {
                                         :td {
-                                            :textContent [$node formatHierarchyString {$it name get} /]/[$node name get]
+                                            :text [$node formatHierarchyString {$it name get} /]/[$node name get]
                                         }
 
                                         :td {
-                                            :textContent [$node description get]
+                                            :text [$node description get]
                                         }
 
                                         :td {
-                                            :textContent 0x[format "%x" [$node getAttribute ::odfi::rfg::address absolute 0]]
+                                            :text 0x[format "%x" [$node getAttribute ::odfi::rfg::address absolute 0]]
                                         }
                                     }
 
@@ -139,11 +141,11 @@ namespace eval odfi::rfg::generator::html {
 
                                     $table tr {
                                         :td {
-                                            :textContent [$node formatHierarchyString {$it name get} /].[$node name get]
+                                            :text [$node formatHierarchyString {$it name get} /].[$node name get]
                                         }
 
                                         :td {
-                                            :textContent [$node description get]
+                                            :text [$node description get]
                                         }
 
                                         :td {
@@ -198,11 +200,11 @@ namespace eval odfi::rfg::generator::html {
                                                     :@ class "content"
                                                     :div {
                                                         :@ class "header"
-                                                        :textContent "[$node name get]"
+                                                        :text "[$node name get]"
                                                     }
                                                     :div {
                                                         :@ class "description"
-                                                        :textContent "[$node description get]"
+                                                        :text "[$node description get]"
                                                     }
                                                     :div {
                                                         :@ class "list"
@@ -222,11 +224,11 @@ namespace eval odfi::rfg::generator::html {
                                                     :@ class "content"
                                                     :div {
                                                         :@ class "header"
-                                                        :textContent "[$node name get]"
+                                                        :text "[$node name get]"
                                                     }
                                                     :div {
                                                         :@ class "description"
-                                                        :textContent "[$node description get]"
+                                                        :text "[$node description get]"
                                                     }
                                                     
                                                 }
@@ -243,11 +245,11 @@ namespace eval odfi::rfg::generator::html {
                                                     :@ class "content"
                                                     :div {
                                                         :@ class "header"
-                                                        :textContent "[$node name get]"
+                                                        :text "[$node name get]"
                                                     }
                                                     :div {
                                                         :@ class "description"
-                                                        :textContent "[$node description get]"
+                                                        :text "[$node description get]"
                                                     }
                                                     :div {
                                                         :@ class "list"
@@ -279,6 +281,7 @@ namespace eval odfi::rfg::generator::html {
                     $rfGroup walkDepthFirstPreorder {
 
                         if {[llength [$node info lookup methods html:doc]]>0} {
+                            set baseReg $node
                             set resultNode [$node html:doc]
                             if {[odfi::common::isClass $resultNode ::odfi::ewww::html::HTMLNode]} {
 
@@ -295,9 +298,9 @@ namespace eval odfi::rfg::generator::html {
                                     :@ role presentation
                                 
                                     
-                                    :a [$node name get] #[$resultNode getAttribute id]-tab {
+                                    :a [$baseReg name get] #[$resultNode getAttribute id]-tab {
                                         :@* aria-controls=[$resultNode getAttribute id]-tab role=tab data-toggle=tab
-                                       # :textContent $text
+                                       # :text $text
                                     }
                                 
                                 }

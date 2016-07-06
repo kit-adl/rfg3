@@ -135,6 +135,7 @@ namespace eval odfi::rfg::generator::h2dl {
                     set readIf ""
                     set readMain ""
                     set readReset ""
+                    set notReadElse ""
                     set readPosedge [:posedge $clk {
                         
                         set readReset [:if {! $res_n} {
@@ -145,10 +146,10 @@ namespace eval odfi::rfg::generator::h2dl {
                             set readIf [:if {$read == 1} {
 
                             } ]
-                            :else {
+                            set notReadElse [:else {
                             
                                 $done <= 0;
-                            }
+                            }]
                         }]
                         
                     } ]
@@ -261,8 +262,12 @@ namespace eval odfi::rfg::generator::h2dl {
                                                         $done <= 1
                                                     }
                                                     :else {
-                                                        ## set read to 0
+                                                    
+                                                        ## set read to 0 in normal case, but also if no read at all is provided
                                                         $read_enable <= 0
+                                                        $notReadElse apply {
+                                                            $read_enable <= 0
+                                                        }
                                                     }
                                                 }
                                                 
