@@ -10,21 +10,21 @@
                 </title>
             
  
-                <script  src="/jquery/jquery.min.js" >
+                <script  src="/rfg3//jquery/jquery.min.js" >
 
                     
                 </script>
             
  
-                <script  src="/semantic/semantic.min.js" >
+                <script  src="/rfg3//semantic/semantic.min.js" >
 
                     
                 </script>
             
- <link rel='stylesheet' href='/semantic/semantic.min.css'/>
- <link rel='stylesheet' href='/highlight.js/styles/default.css'/>
+ <link rel='stylesheet' href='/rfg3//semantic/semantic.min.css'/>
+ <link rel='stylesheet' href='/rfg3//highlight.js/styles/default.css'/>
  
-                <script  src="/highlight.js/highlight.pack.js" >
+                <script  src="/rfg3//highlight.js/highlight.pack.js" >
 
                     
                 </script>
@@ -36,12 +36,12 @@
                 </script>
             
  
-                <script  src="/common-odfi.js" >
+                <script  src="/rfg3//common-odfi.js" >
 
                     
                 </script>
             
- <link rel='stylesheet' href='/common-odfi.css'/>
+ <link rel='stylesheet' href='/rfg3//common-odfi.css'/>
 
                 </head>
             
@@ -79,7 +79,7 @@
                 <div  class="item" >
 
                      
-                <a  href="/index.html" >
+                <a  href="/rfg3//index.html" >
 
                     Home 
                 </a>
@@ -97,7 +97,7 @@
                 <div  class="item" >
 
                      
-                <a  href="/syntax/syntax-index.html" >
+                <a  href="/rfg3//syntax/syntax-index.html" >
 
                     Overview 
                 </a>
@@ -145,11 +145,15 @@ This method enables a simple usage by just writting a TCL file and running it, o
 
 <p>overview.tcl:</p>
 
-<pre><code>## Loading package is required
+<pre><code>## Load the RFG Tool
 package require odfi::rfg 3.0.0
+
+## Load the Verilog Generator
 
 ## Now Create the Register File Description
 set test true
+
+## Finally Generate the Verilog Output
 </code></pre>
 
 <p>Now run this script through the RFG TCL interpreter:</p>

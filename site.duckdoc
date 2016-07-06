@@ -1,6 +1,7 @@
 
 ## Parameters
 set :siteName "RFG3"
+set :sitePath "/rfg3"
 :attribute ::odfi::common github https://github.com/kit-adl/rfg3
 
 ## Add Template
