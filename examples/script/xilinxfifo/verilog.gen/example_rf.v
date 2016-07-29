@@ -1,0 +1,266 @@
+module example_rf (
+    input wire clk,
+    input wire res_n,
+    input wire read,
+    output reg [7:0] read_data,
+    input wire write,
+    input wire [7:0] write_data,
+    output reg done,
+    input wire [2:0] address,
+    output reg [7:0] info_scratchpad0,
+    input wire info_scratchpad0_hw_write,
+    input wire [7:0] info_scratchpad0_hw,
+    output reg [7:0] info_scratchpad1,
+    input wire info_scratchpad1_hw_write,
+    input wire [7:0] info_scratchpad1_hw,
+    input wire info_test_fifo_reset,
+    input wire [31:0] info_test_fifo_din,
+    input wire info_test_fifo_wr_en,
+    input wire info_test_fifo_wr_clk,
+    output wire [7:0] info_test_fifo_dout,
+    output wire info_test_fifo_full,
+    output wire info_test_fifo_empty,
+    output wire info_test_fifo_almost_full,
+    input wire info_test_fifo2_reset,
+    input wire [31:0] info_test_fifo2_din,
+    input wire info_test_fifo2_wr_en,
+    input wire info_test_fifo2_wr_clk,
+    output wire [7:0] info_test_fifo2_dout,
+    output wire info_test_fifo2_full,
+    output wire info_test_fifo2_empty,
+    output wire info_test_fifo2_almost_full
+);
+              // Parametersrs
+              //---------------
+
+
+              // Signaling
+              //---------------
+              reg  info_test_fifo2_read_enable;
+              reg  [2:0] info_test_fifo2_status;
+              reg  [3:0] info_test_fifo2_status;
+              reg  info_test_fifo_read_enable;
+
+
+              // Assigments
+              //---------------
+
+
+
+
+              // Instances
+              //---------------
+              fifo_generator_0 info_test_fifo              (
+                   .rst( ( !res_n ) | info_test_fifo_reset),
+                   .din(info_test_fifo_din),
+                   .wr_en(info_test_fifo_wr_en),
+                   .wr_clk(info_test_fifo_wr_clk),
+                   .dout(info_test_fifo_dout),
+                   .rd_en(info_test_fifo_read_enable),
+                   .rd_clk(clk),
+                   .full(info_test_fifo_full),
+                   .empty(info_test_fifo_empty),
+                   .almost_full(info_test_fifo_almost_full)
+);
+
+              fifo_generator_0 info_test_fifo2              (
+                   .rst( ( !res_n ) | info_test_fifo2_reset),
+                   .din(info_test_fifo2_din),
+                   .wr_en(info_test_fifo2_wr_en),
+                   .wr_clk(info_test_fifo2_wr_clk),
+                   .dout(info_test_fifo2_dout),
+                   .rd_en(info_test_fifo2_read_enable),
+                   .rd_clk(clk),
+                   .full(info_test_fifo2_full),
+                   .empty(info_test_fifo2_empty),
+                   .almost_full(info_test_fifo2_almost_full)
+);
+
+
+
+              // Logic
+              //---------------
+              
+              // Posedge
+              //------------------------
+              always @(posedge clk) begin
+
+                   if (~ res_n) begin
+
+                        read_data <= 0;
+                        done <= 0;
+                        info_test_fifo_read_enable <= 0;
+                        info_test_fifo2_read_enable <= 0;
+
+                   end
+                   else begin
+
+                        if (read == 1) begin
+
+                             if (address == 0 && read == 1) begin
+
+                                  read_data <= info_scratchpad0;
+                                  done <= 1;
+
+                             end
+                             if (address == 1 && read == 1) begin
+
+                                  read_data <= info_scratchpad1;
+                                  done <= 1;
+
+                             end
+                             if (address == 2 && read == 1) begin
+
+                                  read_data <= info_test_fifo_dout;
+                                  info_test_fifo_read_enable <= 1;
+                                  done <= 1;
+
+                             end
+                             else begin
+
+                                  info_test_fifo_read_enable <= 0;
+
+                             end
+                             if (address == 3 && read == 1) begin
+
+                                  read_data <= info_test_fifo2_dout;
+                                  info_test_fifo2_read_enable <= 1;
+                                  done <= 1;
+
+                             end
+                             else begin
+
+                                  info_test_fifo2_read_enable <= 0;
+
+                             end
+                             if (address == 4 && read == 1) begin
+
+                                  read_data <= info_test_fifo2_status;
+                                  done <= 1;
+
+                             end
+                             if (address == 5 && read == 1) begin
+
+                                  read_data <= info_test_fifo2_status;
+                                  done <= 1;
+
+                             end
+
+                        end
+                        else begin
+
+                             done <= 0;
+                             info_test_fifo_read_enable <= 0;
+                             info_test_fifo2_read_enable <= 0;
+
+                        end
+
+                   end
+
+              end
+
+              
+              // Posedge
+              //------------------------
+              always @(posedge clk) begin
+
+                   if (~ res_n) begin
+
+                        info_scratchpad0 <= 0;
+
+                   end
+                   else begin
+
+                        if (address == 0 && write == 1) begin
+
+                             info_scratchpad0 <= write_data;
+
+                        end
+                        else if (info_scratchpad0_hw_write == 1) begin
+
+                             info_scratchpad0 <= info_scratchpad0_hw;
+
+                        end
+
+                   end
+
+              end
+
+              
+              // Posedge
+              //------------------------
+              always @(posedge clk) begin
+
+                   if (~ res_n) begin
+
+                        info_scratchpad1 <= 0;
+
+                   end
+                   else begin
+
+                        if (address == 1 && write == 1) begin
+
+                             info_scratchpad1 <= write_data;
+
+                        end
+                        else if (info_scratchpad1_hw_write == 1) begin
+
+                             info_scratchpad1 <= info_scratchpad1_hw;
+
+                        end
+
+                   end
+
+              end
+
+              
+              
+              // Section writeSection
+
+                   
+                   // Posedge
+                   //------------------------
+                   always @(posedge clk) begin
+
+                        if (~ res_n) begin
+
+                             info_test_fifo2_status <= 0;
+
+                        end
+                        else begin
+
+                             info_test_fifo2_status <= {info_test_fifo2_almost_full,info_test_fifo2_empty,info_test_fifo2_full};
+
+                        end
+
+                   end
+
+
+              // Section writeSection
+
+                   
+                   // Posedge
+                   //------------------------
+                   always @(posedge clk) begin
+
+                        if (~ res_n) begin
+
+                             info_test_fifo2_status <= 1;
+
+                        end
+                        else begin
+
+                             if (info_test_fifo2_read_enable) begin
+
+                                  info_test_fifo2_status <= { info_test_fifo2_status[2:0]  ,info_test_fifo2_status[3]};
+
+                             end
+
+                        end
+
+                   end
+
+
+
+
+endmodule
