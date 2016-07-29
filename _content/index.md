@@ -29,30 +29,58 @@ The Single File Release is an all-in-one TCL interpreter which you can use to ru
 RFG usage is based on a single script, from which you can make calls to the API to describe the registers and generate the outputs.
 This method enables a simple usage by just writting a TCL file and running it, or embedding  easily into any existing script flow.
 
-Assuming you are using a single file release executable, which you have renamed as "rfg"
+* On Windows you can use the PowerShell to download the tool
 
-overview.tcl:
+	$ Invoke-WebRequest https://www.idyria.com/access/osi/files/builds/tcl/rfg-full-latest-win64.exe -OutFile rfg.exe
+
+* On Windows using Msys like Bash (Msys2/Git Bash)
+
+	$ curl -o rfg.exe https://www.idyria.com/access/osi/files/builds/tcl/rfg-full-latest-win64.exe
+	
+* Now write the file simplestart.tcl:
+
+~~~~~~
 
 	## Load the RFG Tool
 	package require odfi::rfg 3.0.0
 	
 	## Load the Verilog Generator
+	package require odfi::rfg::generator::verilog 3.0.0
+	
 	
 	## Now Create the Register File Description
-	set test true
+	odfi::rfg::registerFile testRF {
+		
+		:register dummy {
+			
+		}
+	}
 	
 	## Finally Generate the Verilog Output
-	
+	## Format: registerFile verilog:generate targetFolder
+	$testRF verilog:generate .
 
 
+~~~~~~
 
 Now run this script through the RFG TCL interpreter:
 
->rfg overview.tcl
+	$ rfg simplestart.tcl
 
-You should see the output:
+You should see a new file has been created: testRF.v , which contains the dummy register with an address based interface and an output for the hardware to access the value
+of the register:
 
-* first_rfg.v
+## Where to go?
 
-Which contains your register with a read and write interface
+To use the tool at its full extend, you will need: 
+
+* An IO interface to drive the address base interface. This could be a custom protocol over a standard physical interface like SPI or and FTDI Fifo chip.
+** Some standard interfaces are available in the library
+** Learn how to write one from IO interface documentation category
+* The register definition have support for various features like fields to access the single bits of the register
+** Consult the Syntax reference for the list of standard features
+* Some Registers can have a special implementation or behaviour, like a counting register, or a register backed by a FIFO. Some standard components are available
+from the Standard Library
+** The RFG API language can be easily extended to add your own custom special registers, see the Extension documentation
+
 

@@ -4,120 +4,158 @@
                 <head >
 
                     
+                    
                 <title >
 
+                    
                     RFG3 :: Welcome to RFG3
+                    
                 </title>
             
- 
+
                 <script  src="/rfg3//jquery/jquery.min.js" >
 
                     
+                    
+                    
                 </script>
             
- 
+
                 <script  src="/rfg3//semantic/semantic.min.js" >
 
                     
+                    
+                    
                 </script>
             
- <link rel='stylesheet' href='/rfg3//semantic/semantic.min.css'/>
- <link rel='stylesheet' href='/rfg3//highlight.js/styles/default.css'/>
- 
+<link rel='stylesheet' href='/rfg3//semantic/semantic.min.css'/>
+<link rel='stylesheet' href='/rfg3//highlight.js/styles/default.css'/>
+
                 <script  src="/rfg3//highlight.js/highlight.pack.js" >
 
                     
-                </script>
-            
- 
-                <script >
-
-                    hljs.initHighlightingOnLoad();
-                </script>
-            
- 
-                <script  src="/rfg3//common-odfi.js" >
-
+                    
                     
                 </script>
             
- <link rel='stylesheet' href='/rfg3//common-odfi.css'/>
 
+                <script >
+
+                    
+                    hljs.initHighlightingOnLoad();
+                    
+                </script>
+            
+
+                <script  src="/rfg3//common-odfi.js" >
+
+                    
+                    
+                    
+                </script>
+            
+<link rel='stylesheet' href='/rfg3//common-odfi.css'/>
+
+                    
                 </head>
             
- 
+
                 <body >
 
+                    
                     
                 <a  href="https://github.com/kit-adl/rfg3" >
 
                     
+                    
                 <text >
 
                     
+                    
+                    
                 </text>
             
-  
+
                 <img  src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" style="position: absolute; top: 0; right: 0; border: 0;" alt="Fork me on Github" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" >
 
-                       
+                    
+                    
+                    
                 </img>
             
 
+                    
                 </a>
             
- 
+
                 <div  class="ui menu" >
 
-                     
+                    
+                    
                 <div  class="header item" >
 
-                     RFG3
+                    
+                    RFG3
+                    
                 </div>
             
- 
+
                 <div  class="item" >
 
-                     
+                    
+                    
                 <a  href="/rfg3//index.html" >
 
-                    Home 
+                    
+                    Home
+                    
                 </a>
             
 
+                    
                 </div>
             
- 
+
                 <div  class="ui dropdown simple item" >
 
-                     Syntax 
+                    
+                    Syntax
                 <div  class="menu" >
 
-                     
+                    
+                    
                 <div  class="item" >
 
-                     
+                    
+                    
                 <a  href="/rfg3//syntax/syntax-index.html" >
 
-                    Overview 
+                    
+                    Overview
+                    
                 </a>
             
 
+                    
                 </div>
             
 
+                    
                 </div>
             
 
+                    
                 </div>
             
 
+                    
                 </div>
             
- 
+
                 <div  id="content" >
 
-                     <h1>Register File Generators (RFG) 3 </h1>
+                    
+                    <h1>Register File Generators (RFG) 3 </h1>
 
 <p>RFG is a small tcl tool used to describe a set a registers needed in a hardware design, and generate
 the appropriate documentation and hardware description in Verilog to rapidly read and write the registers from
@@ -132,7 +170,7 @@ If you are looking for the actual most featured version, have a look at RFG2 mai
 
 <p>To use RFG3, you can install the TCL release and its dependencies using the ODFI manager, or use a single file release.</p>
 
-<p>Single File Releases are available at: <a href="&quot;https://www.idyria.com/access/osi/files/builds/tcl/&quot;">https://www.idyria.com/access/osi/files/builds/tcl/</a></p>
+<p>Single File Releases are available at: <a href="https://www.idyria.com/access/osi/files/builds/tcl/">https://www.idyria.com/access/osi/files/builds/tcl/</a></p>
 
 <p>The Single File Release is an all-in-one TCL interpreter which you can use to run and RFG script.</p>
 
@@ -141,37 +179,71 @@ If you are looking for the actual most featured version, have a look at RFG2 mai
 <p>RFG usage is based on a single script, from which you can make calls to the API to describe the registers and generate the outputs.
 This method enables a simple usage by just writting a TCL file and running it, or embedding  easily into any existing script flow.</p>
 
-<p>Assuming you are using a single file release executable, which you have renamed as &quot;rfg&quot;</p>
+<ul>
+<li><p>On Windows you can use the PowerShell to download the tool</p>
 
-<p>overview.tcl:</p>
+<p>$ Invoke-WebRequest https://www.idyria.com/access/osi/files/builds/tcl/rfg-full-latest-win64.exe -OutFile rfg.exe</p>
 
-<pre><code>## Load the RFG Tool
+</li>
+<li><p>On Windows using Msys like Bash (Msys2/Git Bash)</p>
+
+<p>$ curl -o rfg.exe https://www.idyria.com/access/osi/files/builds/tcl/rfg-full-latest-win64.exe</p>
+
+</li>
+<li><p>Now write the file simplestart.tcl:</p>
+
+</li></ul>
+
+<pre><code>
+## Load the RFG Tool
 package require odfi::rfg 3.0.0
 
 ## Load the Verilog Generator
+package require odfi::rfg::generator::verilog 3.0.0
+
 
 ## Now Create the Register File Description
-set test true
+odfi::rfg::registerFile testRF {
+
+    :register dummy {
+
+    }
+}
 
 ## Finally Generate the Verilog Output
+## Format: registerFile verilog:generate targetFolder
+$testRF verilog:generate .
+
 </code></pre>
 
 <p>Now run this script through the RFG TCL interpreter:</p>
 
-<blockquote>
-<p>rfg overview.tcl</p>
-</blockquote>
+<pre><code>$ rfg simplestart.tcl
+</code></pre>
 
-<p>You should see the output:</p>
+<p>You should see a new file has been created: testRF.v , which contains the dummy register with an address based interface and an output for the hardware to access the value
+of the register:</p>
+
+<h2>Where to go?</h2>
+
+<p>To use the tool at its full extend, you will need:</p>
 
 <ul>
-<li>first_rfg.v
-</li></ul>
+<li>An IO interface to drive the address base interface. This could be a custom protocol over a standard physical interface like SPI or and FTDI Fifo chip.
+<strong> Some standard interfaces are available in the library
+</strong> Learn how to write one from IO interface documentation category</li>
+<li>The register definition have support for various features like fields to access the single bits of the register
+<em></em> Consult the Syntax reference for the list of standard features</li>
+<li>Some Registers can have a special implementation or behaviour, like a counting register, or a register backed by a FIFO. Some standard components are available
+from the Standard Library
+<em></em> The RFG API language can be easily extended to add your own custom special registers, see the Extension documentation</li></ul>
 
-<p>Which contains your register with a read and write interface</p>
+
+                    
                 </div>
             
 
+                    
                 </body>
             
 
