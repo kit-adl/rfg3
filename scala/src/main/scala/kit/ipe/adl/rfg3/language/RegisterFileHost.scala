@@ -38,7 +38,7 @@ import kit.ipe.adl.rfg3.model.RegisterFile
 
 
 */
-trait RegisterFileHost extends RegisterFileNode {
+trait RegisterFileHost extends RegisterFileNode  {
 
     /**
         The instance of the Register File  to be used

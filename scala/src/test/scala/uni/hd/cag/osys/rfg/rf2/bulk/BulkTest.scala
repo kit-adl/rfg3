@@ -63,7 +63,7 @@ class BulkTest extends FunSuite with RFLanguage with GivenWhenThen {
     }
 
   }
-  Device.targetDevice = dummyDevice
+  Device.targetDevice =  Some(dummyDevice)
 
   test("Bulk Raw Test") {
 

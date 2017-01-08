@@ -1,5 +1,7 @@
 package kit.ipe.adl.rfg3.model
 
+import java.lang.Long
+
 /**
  * @author zm4632
  */
@@ -16,6 +18,7 @@ trait AttributesContainer extends AttributesContainerTrait with CommonTrait {
       case _ => throw new RuntimeException(s"Search String $search has wrong format, mut be: attributesGroupName.attributeName")
     }
     
+    
     // Search for group
     this.attributes.find { a => a.for_.toString ==  group} match {
       case Some(attributes) =>
@@ -29,6 +32,7 @@ trait AttributesContainer extends AttributesContainerTrait with CommonTrait {
   }
   
   def findAttributeLong(search:String) : Option[Long] = this.findAttribute(search) match {
+    case Some(value) if (value.startsWith("0x")) => Some(Long.parseLong(value.drop(2),16))
     case Some(value) => Some(value.toLong)
     case None => None
   }

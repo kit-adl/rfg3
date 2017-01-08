@@ -28,7 +28,10 @@ namespace eval odfi::rfg::stdlib {
                 :attribute odfi::rfg::software rw ro
                 set :fifoName ${:name}
             }
-
+            +method setHWRead args {
+                :attribute odfi::rfg::hardware rw ro
+                :attribute odfi::rfg::software rw wo
+            }
             ## Use generator 
             +method generateXilinxSimpleFifo  args {
                 odfi::log::info "Generating FIFO as Xilinx XCO Module"
@@ -58,6 +61,7 @@ namespace eval odfi::rfg::stdlib {
                     :input rd_clk {
                         :attribute ::odfi::rfg::h2dl clock true
                     }
+                    
                     :input d_in {
                         :width set 63
                     }
@@ -167,18 +171,30 @@ namespace eval odfi::rfg::stdlib {
 odfi::language::nx::new ::odfi::rfg::xilinx {
 
     :fifo : ::odfi::rfg::Register name {
-        +exportTo ::odfi::rfg::Group xilinx
+        +exportTo   ::odfi::rfg::Group xilinx
         +mixin      ::odfi::rfg::generator::h2dl::H2DLSupport
         
         +var softReset false
+        
+        +builder {
+            :attribute odfi::rfg::hardware rw w
+            :attribute odfi::rfg::software rw r
+        }
         
         +method useSoftReset args {
             set :softReset true
         }
         
+        +method setHWRead args {
+            :attribute odfi::rfg::hardware rw r
+            :attribute odfi::rfg::software rw w
+        }
+        
         ## XILINX XCI Format support
         ###########
         +method useXilinxXCIFifo xciFile {
+        
+            set xciFile [::odfi::files::fileRelativeToCaller $xciFile]
         
             ## Checks
             #############
@@ -214,6 +230,9 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
             #######################
             set fifoReg [current object]
             
+            set hwRead  [:attributeMatch odfi::rfg::hardware rw r]
+            set hwWrite [:attributeMatch odfi::rfg::hardware rw w]
+            
             ## One or two clocks?
             set independentClocks false 
             if {[:spiritGetElementValue  $fileContent PARAM_VALUE.Fifo_Implementation]=="Independent_Clocks_Block_RAM"} {
@@ -236,30 +255,46 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
                 }
             }
             
-            ## Input 
+            ## Input or Output of data
+            ####
+            
             $module input din {
                 :width set [$fifoReg spiritGetElementValue $fileContent PARAM_VALUE.Input_Data_Width]
+                if {$hwRead} {
+                    :attribute ::odfi::rfg::h2dl data_in true                 
+                }
             }
             $module input wr_en {
-                        
+                if {$hwRead} {
+                    :attribute ::odfi::rfg::h2dl write_enable true   
+                }        
             }
             if {$independentClocks} {
                 $module input wr_clk {
-                  
+                  if {$hwRead} {
+                      :attribute ::odfi::rfg::h2dl clock true    
+                    }
                 }
             }
             
             ## output 
             $module output dout {
-                :width set [$fifoReg spiritGetElementValue $fileContent PARAM_VALUE.Output_Data_Width]
-                :attribute ::odfi::rfg::h2dl data_out true     
+                :width set [$fifoReg spiritGetElementValue $fileContent PARAM_VALUE.Output_Data_Width] 
+                 if {$hwWrite} {
+                      :attribute ::odfi::rfg::h2dl data_out true                 
+                 }  
             }
             $module input rd_en {
-                :attribute ::odfi::rfg::h2dl read_enable true     
+                if {$hwWrite} {
+                    :attribute ::odfi::rfg::h2dl read_enable true   
+                }
+                  
             }
             if {$independentClocks} {
                 $module input rd_clk {
-                  :attribute ::odfi::rfg::h2dl clock true    
+                  if {$hwWrite} {
+                    :attribute ::odfi::rfg::h2dl clock true    
+                  }
                 }
             }
             
@@ -286,7 +321,7 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
         }
         
         +method spiritGetElementValue {content name} {
-            regexp "<spirit:configurableElementValue spirit:referenceId=\"$name\">(\[\\w_-\]+)<\\/spirit:configurableElementValue>" $fileContent -> result
+            regexp "<spirit:configurableElementValue spirit:referenceId=\"$name\">(\[\\w_-\]+)<\\/spirit:configurableElementValue>" $content -> result
             
             return $result
                         
@@ -328,7 +363,7 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
                 ## Add Produce method to replace write section
                 $statusRegister object mixins add ::odfi::rfg::generator::h2dl::H2DLSupport
                 $statusRegister object variable registerAssignList $registerAssignList
-                $statusRegister object method h2dl:produce args {
+                $statusRegister object method h2dl:produce rfgModule {
                     next
                     set targetReg [current object]
                     set targetH2LDReg [$rfgModule register [$targetReg getHierarchyName] {
@@ -395,7 +430,7 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
                     set fifoReg [current object]
                     $positionRegister object mixins add ::odfi::rfg::generator::h2dl::H2DLSupport
                     $positionRegister object variable relatedFifoReg [current object]
-                    $positionRegister object method h2dl:produce args {
+                    $positionRegister object method h2dl:produce rfgModule {
                         next
                         set targetReg [current object]
                         set targetH2LDReg [$rfgModule register [$targetReg getHierarchyName] {

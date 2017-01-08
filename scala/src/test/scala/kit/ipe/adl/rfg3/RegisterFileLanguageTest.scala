@@ -24,15 +24,15 @@ import com.idyria.osi.ooxoo.core.buffers.extras.transaction.Transaction
 import kit.ipe.adl.rfg3.device.Device
 import org.scalatest.GivenWhenThen
 import kit.ipe.adl.rfg3.language.RFLanguage
-import org.scalatest.matchers.ShouldMatchers
 import kit.ipe.adl.rfg3.model.RegisterFile
 import kit.ipe.adl.rfg3.language.DummyRegisterfileHost
 import org.scalatest.FunSuite
 import kit.ipe.adl.rfg3.device.simulation.SimpleSimulationDevice
+import org.scalatest.Matchers
 
 
 
-class RegisterFileLanguageTest extends FunSuite with ShouldMatchers with GivenWhenThen {
+class RegisterFileLanguageTest extends FunSuite with Matchers with GivenWhenThen {
 
   test("Simple Language test") {
 
@@ -40,7 +40,7 @@ class RegisterFileLanguageTest extends FunSuite with ShouldMatchers with GivenWh
     //-------------
     val registerFile = RegisterFile(getClass().getClassLoader().getResource("extoll_rf.anot.xml"))
     var rfHost = new DummyRegisterfileHost(0, registerFile)
-    Device.targetDevice = new SimpleSimulationDevice
+    Device.targetDevice = Some(new SimpleSimulationDevice)
 
     // Try a script language, it must compile
     //----------------
@@ -80,7 +80,7 @@ class RegisterFileLanguageTest extends FunSuite with ShouldMatchers with GivenWh
     val registerFile = RegisterFile(getClass().getClassLoader().getResource("extoll_rf.anot.xml"))
     var rfHost = new DummyRegisterfileHost(0, registerFile)
     var testDevice = new TestDevice
-    Device.targetDevice = testDevice
+    Device.targetDevice =  Some(testDevice)
 
     // Try a script language, it must compile
     //----------------
@@ -140,7 +140,7 @@ class RegisterFileLanguageTest extends FunSuite with ShouldMatchers with GivenWh
     val registerFile = RegisterFile(getClass().getClassLoader().getResource("extoll_rf.anot.xml"))
     var rfHost = new DummyRegisterfileHost(0, registerFile)
     var testDevice = new TestDevice
-    Device.targetDevice = testDevice
+    Device.targetDevice =  Some(testDevice)
 
     new RFLanguage {
 

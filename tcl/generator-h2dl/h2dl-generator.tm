@@ -15,7 +15,26 @@ namespace eval odfi::rfg::generator::h2dl {
     odfi::language::Language default {
 
         :H2DLGenerator {
-            +exportTo ::odfi::rfg::Interface h2dl
+            #+exportTo ::odfi::rfg::Interface h2dl
+
+            +method mixininit args {
+                puts "Registering H2DL Regenerate"
+                next
+                puts "Registering H2DL Regenerate"
+                :onRegenerate {
+                    puts "H2DL Regenerate"
+                    :h2dl:generate
+                }
+                
+            }
+            +builder {
+                puts "Registering H2DL Regenerate"
+            }
+            
+            +method regenerate args {
+                puts "inside h2dl regenerate"
+                next
+            }
 
             +method generate {{module_closure ""}} {
                 puts "CREATE H2DL IN INTERFACE"
@@ -24,19 +43,29 @@ namespace eval odfi::rfg::generator::h2dl {
                 #    :mapAddresses
                 #}
 
+                ## Find Existing Module
+                set existingModule [:shade ::odfi::h2dl::Module findChildByAttribute ::odfi::rfg generated true]
+                if {$existingModule!=""} {
+                    puts "***** Removing Existing Module "
+                    $existingModule wipe
+                }
+
                 ## Create Module 
                 set module [:toModule2]
                 $module apply $module_closure 
                 puts "Returned value: [$module info class]"
 
                 ## Add Instance 
-                set instance [:addChild [$module createInstance rfg_I]]
+                set instance [$module getLatestInstance]
+                $instance object mixins add ::odfi::rfg::generator::h2dl::Instance
+                $instance attribute ::odfi::rfg generated true
                 :addChild $instance
                 ##$instance addChild $module
 
                 ## Push Up Registerss Interface
+                puts "============================================"
                 $instance pushUpInterface
-
+                puts "============================================"
                 return $instance
                
             }
@@ -96,10 +125,12 @@ namespace eval odfi::rfg::generator::h2dl {
                 if {![string match "*_rf" $moduleName]} {
                     set moduleName "${moduleName}_rf"
                 }
-                set rfgModule [odfi::h2dl::module $moduleName]
+                #set rfgModule [odfi::h2dl::module $moduleName]
                 
-                $rfgModule apply {
-
+                set rfgModule [odfi::h2dl::module $moduleName  {
+                    :attribute ::odfi::rfg generated true
+                    set rfgModule [current object]
+                    
                     ## SW IO
                     :input clk {
                         :attribute ::odfi::rfg::generator::h2dl internal true
@@ -273,8 +304,16 @@ namespace eval odfi::rfg::generator::h2dl {
                                                 
                                                 
                                                 
-
-
+                                            } elseif {[$io hasAttribute ::odfi::rfg::h2dl write_enable]} {        
+                                            
+                                                ## Write Enable is for this address
+                                                set weWire [$rfgModule wire [$node getHierarchyName]_write_enable]
+                                                $weWire assign "$address == [$node getAttribute ::odfi::rfg::address absolute]"
+                                                
+                                                $io connection $weWire
+                                                
+                                            } elseif {[$io hasAttribute ::odfi::rfg::h2dl data_in]} {        
+                                                $io connection ${:write_data}
                                             } elseif {![$io hasConnection]} {
                                                 $io pushUp [$node getHierarchyName]
                                             }
@@ -309,7 +348,7 @@ namespace eval odfi::rfg::generator::h2dl {
                                 }
                                 
                                 set foundWriteField [[$node shade odfi::rfg::Field children] findOption {
-                                    if {[$it attributeMatch ::odfi::rfg hardware *rw*]} {
+                                    if {[$it attributeMatch ::odfi::rfg hardware *w*]} {
                                         return true
                                     } else {
                                         return false 
@@ -318,6 +357,9 @@ namespace eval odfi::rfg::generator::h2dl {
                                 if {[$foundWriteField isDefined]} {
                                     set addHWWrite true
                                     set addHWWriteFields true
+                                } elseif {[$node attributeMatch ::odfi::rfg hardware *w*]} {
+                                    set addHWWrite true
+                                    set addHWWriteFields false
                                 }
 
                                 ## Add Std Reg it was not created before
@@ -332,9 +374,16 @@ namespace eval odfi::rfg::generator::h2dl {
                                         #### If no fields, just propagate the output
                                         if {[[$node shade ::odfi::rfg::Field children] size]==0} {
                                             :toOutput
+                                            ## If Field has a connetion info, make connection
+                                            if {[$node hasAttribute ::odfi::h2dl connection]} {
+                                                #puts "Adding connection to [:name get]"
+                                                :attribute ::odfi::h2dl connection [$node getAttribute ::odfi::h2dl connection]
+                                               
+                                            }
                                         }
                                         $node shade ::odfi::rfg::Field eachChild {
-
+                                            
+                                            set field $it
                                             ## If Field has the same width as interface, adapt 
                                             if {[$it width get]==-1} {
                                                 $it width set $registerSize
@@ -344,11 +393,19 @@ namespace eval odfi::rfg::generator::h2dl {
                                             #puts "Field Bitmap -> [expr  [$it offset get]+[$it width get]-1] <- [$it offset get]"
                                             set bitmap [$h2dlReg bitMap "[expr  [$it offset get]+[$it width get]-1] <- [$it offset get]" [$it name get]]
                                             $bitmap apply {
-                                                $it addChild ${:wire}
+                                                #$it addChild ${:wire}
                                                 #puts "Inside: [:info class]"
                                                 ${:wire} toOutput {
                                                     #puts "Adding attribute isData"
                                                     :attribute ::odfi::rfg isData 1
+                                                    
+                                                    ## If Field has a connetion info, make connection
+                                                    if {[$field hasAttribute ::odfi::h2dl connection]} {
+                                                        #puts "Adding connection to [:name get]"
+                                                        :attribute ::odfi::h2dl connection [$it getAttribute ::odfi::h2dl connection]
+                                                       
+                                                    }
+                                                    
                                                 }
                                             }
                                             
@@ -439,7 +496,7 @@ namespace eval odfi::rfg::generator::h2dl {
                                                                 #}
                                                             } else {
                                                                 
-                                                                $concatExpr addChild [::odfi::h2dl::ast::buildAST $h2dlReg @ [expr [$it offset get]+[$it width get]-1] <- [$it offset get]]
+                                                                $concatExpr addChild [::odfi::h2dl::ast::buildAST $h2dlReg @ ([expr [$it offset get]+[$it width get]-1] <- [$it offset get])]
                                                                 
                                                                 #lappend exprRes [list $h2dlReg @ [expr [$it offset get]+[$it width get]-1] <- [$it offset get]]
                                                                 #lappend exprRes ,
@@ -507,14 +564,16 @@ namespace eval odfi::rfg::generator::h2dl {
                     #    :addChild $testCase
                     #}
 
+                    #if {[:getLatestInstance]!=""} {
+                    #    [:getLatestInstance]e object mixins add ::odfi::rfg::generator::h2dl::Instance
+                    #}
+                    #:object method doCreateInstance args {
+                    #    set resInstance [next]
+                    #    $resInstance object mixins add ::odfi::rfg::generator::h2dl::Instance
+                    #    return $resInstance
+                    #}
 
-                    :object method doCreateInstance args {
-                        set resInstance [next]
-                        $resInstance object mixins add ::odfi::rfg::generator::h2dl::Instance
-                        return $resInstance
-                    }
-
-                }
+                }]
 
                 return $rfgModule
 
@@ -557,10 +616,24 @@ namespace eval odfi::rfg::generator::h2dl {
              ## Push Up RES 
              #${:res_n} pushUp
 
-             ## Push Up Standard Interface            
-             :shade {return [expr [$it isClass odfi::h2dl::IO] && ![$it hasAttribute ::odfi::rfg::generator::h2dl internal]]} eachChild {
-                $it pushUp
-             }
+             ## Push Up Standard Interface    
+             puts "Push interface on [:info class]"  
+             #:shade odfi::h2dl::IO  pushUpAll {
+             #    if {![$it hasAttribute ::odfi::rfg::generator::h2dl internal]} {
+             #       return true
+             #    } else {
+              #      return false
+              #   }
+                
+            #}      
+            
+            :shade odfi::h2dl::IO  pushUpAll {expr {![$it hasAttribute ::odfi::rfg::generator::h2dl internal]} }
+             #:shade odfi::h2dl::IO eachChild {
+              #  if {![$it hasAttribute ::odfi::rfg::generator::h2dl internal]} {
+              #      $it pushUp 
+              #  }
+               
+             #}
              
             return
              

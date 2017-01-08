@@ -20,6 +20,7 @@ package provide odfi::rfg       3.0.0
 package require odfi::language   1.0.0 
 package require odfi::attributes 2.0.0
 package require odfi::h2dl       2.0.0
+package require odfi::log        1.0.0
 
 namespace eval odfi::rfg {
 
@@ -60,6 +61,17 @@ namespace eval odfi::rfg {
             ## Register size in bits
             +var registerSize 8 
             
+            +method init args {
+                next
+                puts "On Interface Init"
+                :registerEventPoint regenerate
+                :registerEventPoint regenerateDone
+            }
+            
+            +method mixininit args {
+                next
+            }
+            
             +builder {
                 
                 ## Use class name for module name
@@ -70,14 +82,29 @@ namespace eval odfi::rfg {
                 
                 ## Add to Container Module
                 ## Do this at the end to let implementation builders have time to work
+ 
                 :onBuildDone {
                     puts "Inside Interface builder with parent: [:parent]"
+                    :regenerate
+                    return
+                    ## get location
+                    lassign  [::odfi::common::findFileLocation] f l frame up
+                    
+                    puts "loc:  [::odfi::common::findFileLocation] , current level [info level]"
+                    #foreach elt [::odfi::common::findFileLocationSegments] {
+                    #    puts "S: $elt"
+                    #}
+                    #
+                   #exit
+                    
                     set p [:parent]
                     if {$p!="" && [$p isClass ::odfi::h2dl::Module]} {
                         set instance [:createInstance ${:instanceName}]
                         $p addChild $instance
+                        uplevel $up [list ::set ${:instanceName} $instance]
                     }
                 }
+               
                 
                 
             
@@ -103,6 +130,144 @@ namespace eval odfi::rfg {
                 }
             
             }
+            
+            ## Regenerate the 
+            +method regenerate args {
+                next
+                #puts "Calling Regenerate"
+                set targetInterface [current object]
+                if {[:isClass ::odfi::h2dl::Instance]} {
+                    set targetInterface [:master get]
+                }
+                
+                
+                ## Clean Any Instance of RFG Module
+                #########
+                $targetInterface callRegenerate
+                $targetInterface callRegenerateDone
+            }
+            
+            
+            +method transferIOToInstance {instance io} {
+                next
+                #puts "overriding transfer of IO [$io name get] to instance"
+                if {[$io hasAttribute ::odfi::h2dl connection]} {
+                    #puts "-> Adding connection"
+                    [$instance findChildByProperty name [$io name get]] connection [$io getAttribute ::odfi::h2dl connection]
+                }
+            }
+            
+            ## Pulling
+            ####################
+            +method pull {instance match as targetBaseName} {
+            
+                ## Pull is called on instance for connections but need master for formal definitions
+                ##########
+                set interfaceMaster [:master get]
+                puts "Pull on: [:master get]"
+            
+                ## Checks
+                #############
+                set registerFile [$interfaceMaster shade ::odfi::rfg::RegisterFile firstChild -error "Cannot run Pull if no register file is present"]
+                
+                
+                ## Create / Get Group
+                ########
+                set groupName [$instance name get]
+                set group  [$registerFile group $groupName]
+                
+                ## Get All the IO matching name
+                #########
+                
+                set pullIO [$instance shade ::odfi::h2dl::IO findChildrenByProperty name $match]
+                
+                ## Exclude already connected ones
+                set pullIO [$pullIO filterNot {$it hasConnection}]
+                
+                puts "Pulling IO: [$pullIO size]"
+               
+               ## Create registers and align IOs in them
+               #############
+               
+               ## use target base name to create registers
+               ## look for an existing register and take its index as base or start at 0
+               set currentRegister ""
+               set lastRegister [[$group shade ::odfi::rfg::Register findChildrenByProperty name $targetBaseName*] last]
+               set regIndex 0
+               if {$lastRegister!=""} {
+                 regexp {.+([\d]+)} [$lastRegister name get] -> regIndex
+                 incr regIndex
+               }
+               
+               $pullIO isEmpty {
+               
+               } else {
+                 
+                 $pullIO foreach {
+                    {io ioIndex} => 
+                    
+                   
+                    ## - Take needed width                   
+                    set needed [$io width get]
+  
+                    ## - If IO is wider than register size, create multiple registers
+                    ## - Otherwise add as field
+                    if {$needed>${:registerSize}} {
+                        
+                        puts "Pulling IO [$io name get], needing $needed bits, per register ${:registerSize}"
+                        
+                        ## Calculate numer of required registers
+                        set requiredTotal [expr int(ceil($needed/${:registerSize}))]
+                        
+                        ## Create a new register for each and use up the bits
+                        repeat $requiredTotal {
+                            set splittingRegister [$group register [$io name get]$i]
+                            
+                            ## Connection is just a range of target
+                            
+                            $splittingRegister attribute ::odfi::h2dl connection [$io expr:range [expr $i*${:registerSize}] -> [expr $i*${:registerSize}+${:registerSize}-1] ]
+                            $io connection [$io name get]
+                        }
+                    
+                    } else {
+                        
+                        ## If no current register, create one
+                        if {$currentRegister==""} {
+                            set currentRegister [$group register ${targetBaseName}$regIndex]
+                            incr regIndex
+                        }
+                        
+                        ## - Take remaining in current Register
+                        set remaining [expr ${:registerSize} - [$currentRegister getWidth] ]
+                        
+                        ## If not enough room, go to next register and remaining is now the full register width
+                        if {$needed>$remaining} {
+                            set currentRegister [$group register ${targetBaseName}$regIndex]
+                            incr regIndex
+                            set remaining ${:registerSize}
+                        }
+                    
+                        $currentRegister field [$io name get] {
+                            :width set [$io width get]
+                            :attribute ::odfi::h2dl connection $io
+                            #puts "Adding connection to [current object] [:name get]"
+                        }
+                    }
+                 
+                 }
+                 ## EOF IO Foreach
+                 
+                 ## Regenerate to reflect changes
+                 :regenerate
+                 
+                 ## Now Make Connections
+                 
+                    
+               }
+               
+                
+            
+            }
 
    
 
@@ -113,6 +278,7 @@ namespace eval odfi::rfg {
 
         :group : Description name  {
             +exportTo Group
+            +unique    name
             #+mixin ::odfi::attributes::AttributesContainer
 
             ## RF Top interface, which is a group 
@@ -122,6 +288,7 @@ namespace eval odfi::rfg {
                 +exportTo Group
                 +exportToPublic
                 +expose    name
+                +unique    name
 
                 ## Walk the tree and add addresses to everyone
                 +method mapAddresses args {
@@ -133,8 +300,15 @@ namespace eval odfi::rfg {
                     if {![$interface isClass ::odfi::rfg::Interface]} {
                         set interface [[:shade ::odfi::rfg::Interface getParentsRaw] at 0]
                         if {$interface==""} {
-                            odfi::log::warn "Not Interface found in RFG hierarchy, using default register width of 8"
-                            set registerSize 8
+                        
+                            if {[[current object] hasAttribute ::odfi::rfg registerSize]} {
+                                set registerSize [[current object] getAttribute ::odfi::rfg registerSize]
+                            } else {
+                                odfi::log::warn "No Interface found in RFG hierarchy and no ::odfi::rfg::registerSize attribute , using default register width of 8"
+                                set registerSize 8
+                            }
+                        
+                           
                             #error "Register File Cannot Map Addresses because the register size is required to generate correct address increment"
                         } else {
                             ## Get Register Size 
@@ -173,6 +347,7 @@ namespace eval odfi::rfg {
             ## Group Common 
             :register : Description name {
                 +mixin ::odfi::attributes::AttributesContainer
+                +var reset 0
 
                 ## End of register, if no field, create a field with same name and width as register 
                 +builder {
@@ -194,6 +369,40 @@ namespace eval odfi::rfg {
                     
                     
                     return $sum
+                }
+                
+                ## Set the absolute address
+                +method address addr {
+                    :attribute ::odfi::rfg::address absolute [expr int($addr)]
+                }
+
+                ## Lsit format: MSB  .... LSB , thus reverse the args before processing
+                +method fieldsFromList  args {
+                    
+                    foreach f [lreverse $args] {
+                        
+                        regexp {(\w+)(?:\((\d+):(\d+)\))?} $f -> name msb lsb
+                        
+                        ## Create field
+                        puts "Creating field with: $name $msb <- $lsb"
+                        :field $name {
+                            if {$msb!="" && $lsb !=""} {
+                                :width set [expr $msb - $lsb +1]
+                            }
+                        }
+                        
+                        
+                    }
+                    
+                    
+                    
+                }
+
+                +method reserved  args { 
+                    :field RSVD {
+                        :attribute ::odfi::rfg reserved true
+                    }
+                    
                 }
 
                 ## Field 

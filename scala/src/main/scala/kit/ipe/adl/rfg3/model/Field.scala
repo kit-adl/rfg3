@@ -56,6 +56,8 @@ class Field extends FieldTrait with ListeningSupport {
    */
   def value_=(newData: java.lang.Long) = {
 
+ 
+    
     // Read
     var actualValue: Long = parentRegister.value.toLong
 
@@ -64,7 +66,7 @@ class Field extends FieldTrait with ListeningSupport {
     //var resultingValue = TeaBitUtil.setBits(actualValue, offset, offset + (width - 1), newData)
     var scalResult = Field.setBits(actualValue, offset, offset + (width - 1), newData)
 
-    //  println(s"Changing value of field $name (${offset+(width-1)}:$offset) , reg was ${java.lang.Long.toHexString(actualValue)}, is now: ${java.lang.Long.toHexString(scalResult)}")
+    // println(s"Changing value of field $name (${offset+(width-1)}:$offset) , reg was ${java.lang.Long.toHexString(actualValue)}, is now: ${java.lang.Long.toHexString(scalResult)}")
     // println(s"Scal result: ${java.lang.Long.toHexString(scalResult)}")
     // println(s"Setting to: ${this.parentRegister.name}")
 

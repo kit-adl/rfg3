@@ -347,6 +347,16 @@ trait RFLanguage {
    * Ex: write(80) into "/path/to/destination"
    */
   def write(v: Long): Destination = new Destination(v)
+  
+  /**
+   * Creates a destination from boolean
+   *
+   * Ex: write(80) into "/path/to/destination"
+   */
+  def write(v: Boolean): Destination = v match {
+    case true => new Destination(1)
+    case false => new Destination(0)
+  }
 
   // Search
   //---------------

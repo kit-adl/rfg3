@@ -26,7 +26,7 @@ import kit.ipe.adl.rfg3.model.VerilogLongValue
 import kit.ipe.adl.rfg3.model.Field
 
 
-class BaseTypesTest extends FeatureSpec with ShouldMatchers with GivenWhenThen {
+class BaseTypesTest extends FeatureSpec with Matchers with GivenWhenThen {
 
   feature("Verilog Value") {
 
@@ -47,22 +47,22 @@ class BaseTypesTest extends FeatureSpec with ShouldMatchers with GivenWhenThen {
 
       var buffer = new VerilogLongValue()
 
-      expectResult("a")(java.lang.Long.toHexString(buffer.dataFromString("4'b1010")))
-      expectResult("3aba")(java.lang.Long.toHexString(buffer.dataFromString("16'b011101010111010")))
+      assertResult("a")(java.lang.Long.toHexString(buffer.dataFromString("4'b1010")))
+      assertResult("3aba")(java.lang.Long.toHexString(buffer.dataFromString("16'b011101010111010")))
 
     }
 
     scenario("Decimal Value") {
 
       var buffer = new VerilogLongValue()
-      expectResult("444c")(java.lang.Long.toHexString(buffer.dataFromString("32'd17484")))
+      assertResult("444c")(java.lang.Long.toHexString(buffer.dataFromString("32'd17484")))
 
     }
 
     scenario("Decimal Value with empty value") {
 
       var buffer = new VerilogLongValue()
-      expectResult("0")(java.lang.Long.toHexString(buffer.dataFromString("32'd")))
+      assertResult("0")(java.lang.Long.toHexString(buffer.dataFromString("32'd")))
 
     }
   }
@@ -80,29 +80,29 @@ class BaseTypesTest extends FeatureSpec with ShouldMatchers with GivenWhenThen {
         addr.value = 0x15f0
         
         // Return should be 0x15f0
-        expectResult(0x15f0)(register.valueBuffer.data)*/
+        assertResult(0x15f0)(register.valueBuffer.data)*/
 
       /*var res = TeaBitUtil.setBits(0x15f4,0,63,0x15f0)
-        expectResult(0x15f0)(res)*/
+        assertResult(0x15f0)(res)*/
 
       // Single Bit Sets
       //-------------------------
       var res = Field.setBits(0, 0, 0, 1)
-      expectResult(1)(res)
+      assertResult(1)(res)
       
       res = Field.setBits(0, 1, 1, 1)
-      expectResult(2)(res)
+      assertResult(2)(res)
       
       res = Field.setBits(0x15f4, 0, 63, 0x15f0)
-      expectResult(0x15f0)(res)
+      assertResult(0x15f0)(res)
 
       res = Field.setBits(0x15f0, 0, 63, 0x15f4)
-      expectResult(0x15f4)(res)
+      assertResult(0x15f4)(res)
 
       res = Field.setBits(0, 63, 63, 1)
-      expectResult('1')(res.toBinaryString(63 - 63))
+      assertResult('1')(res.toBinaryString(63 - 63))
 
-      //expectResult(0x15f4)(res) 
+      //assertResult(0x15f4)(res) 
 
       // Multiple bit sets
       //------------------------------
@@ -111,20 +111,20 @@ class BaseTypesTest extends FeatureSpec with ShouldMatchers with GivenWhenThen {
       var res2 = Field.setBits(0, 0,0, 1)
       res2 = Field.setBits(res2, 2,2, 1)
       res2 = Field.setBits(res2, 4,4, 1)
-      expectResult("10101")(res2.toBinaryString)
+      assertResult("10101")(res2.toBinaryString)
       
       //-- Reset only one bit in the middle
       var resettedOne =  Field.setBits(res2, 2,2, 0)
-      expectResult("10001")(resettedOne.toBinaryString)
+      assertResult("10001")(resettedOne.toBinaryString)
       
       //-- Reset previous '1'
       var reseted1 = Field.setBits(res2, 0,0,0)
       reseted1 = Field.setBits(reseted1, 2,2, 0)
       reseted1 = Field.setBits(reseted1, 4,4, 0)
-      expectResult("0")(reseted1.toBinaryString)
+      assertResult("0")(reseted1.toBinaryString)
       
       var reseted2 = Field.setBits(res2, 0,4,0)
-      expectResult("0")(reseted2.toBinaryString)
+      assertResult("0")(reseted2.toBinaryString)
       
     }
 

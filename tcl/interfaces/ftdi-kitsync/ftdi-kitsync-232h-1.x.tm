@@ -11,6 +11,8 @@ package require odfi::h2dl::stdlib
 namespace eval ::ftdi::kit::rfg {
 
     variable location [file dirname [file normalize [info script]]]
+    
+    variable ftdi_tb_functions [file normalize $location/simulation/ftdi_tb_functions.v]
 }
 
 odfi::language::nx::new ::ftdi::kit::rfg {
@@ -22,20 +24,27 @@ odfi::language::nx::new ::ftdi::kit::rfg {
         +var outputOrderSorter false
         
         +builder {
-                        
-            :onBuildDone {
+              
+            ## Prepare IO and base structure    
+            puts "Sync building"
+            
+            ## Merge Verilog from reference Verilog Implementation
+            set importedTopContent [:verilog:merge ${::ftdi::kit::rfg::location}/ftdi_interface_top.v]
+  
+            ## Add Companion sources 
+            :attribute ::odfi::verilog companions [list  ${::ftdi::kit::rfg::location}/ftdi_interface_control_fsm.v ${::ftdi::kit::rfg::location}/OrderSorter.v ${::ftdi::kit::rfg::location}/async_fifo_ftdi/async_fifo_ftdi.xci]
+    
+            ## Finishing internal connection to RFG after regenerate done, meaning after the user has setup the RFG            
+            :onRegenerateDone {
 
-                ## Merge Verilog from reference Verilog Implementation
-                set importedTopContent [:verilog:merge ${::ftdi::kit::rfg::location}/ftdi_interface_top.v]
-
-                ## Add Companion sources 
-                :attribute ::odfi::verilog companions [list  ${::ftdi::kit::rfg::location}/ftdi_interface_control_fsm.v ${::ftdi::kit::rfg::location}/OrderSorter.v ${::ftdi::kit::rfg::location}/async_fifo_ftdi/async_fifo_ftdi.xci]
-
+               
                 ## Generate H2DL 
                 ## Make RTL View 
                 ## Generate creates the RFG Module, instantiate it in this module, and return the instance
-                set rfgInstance [:h2dl:generate]
 
+               # set rfgInstance [:findChildByAttribute ::odfi::rfg generated true]
+               set rfgInstance [:h2dl:generate]
+              
                 ## Connections of interface's regs for control to the register file module
                 :wire rfg_read_done 
                 :wire rfg_read_data {
@@ -71,6 +80,12 @@ odfi::language::nx::new ::ftdi::kit::rfg {
                     :output   ordersorter_read
                     :output   ordersorter_write
                 }
+                
+                ## Push Up all data io
+                #[$rfgInstance findChildrenByAttributeNot ::odfi::rfg::generator::h2dl internal true] foreach {
+                #    puts "Found IO to push"
+                    #$it pushUp
+                #}
 
 
             }
@@ -87,7 +102,7 @@ odfi::language::nx::new ::ftdi::kit::rfg {
 
         +method doCreateInstance args {
             set r [next]
-            #puts "OVERRIDEN DO CREATE INSTANCE $r"
+            puts "OVERRIDEN DO CREATE INSTANCE $r"
             $r onParentAdded {
                 
                 set newParent [[:getParentsRaw] at end]
@@ -100,7 +115,7 @@ odfi::language::nx::new ::ftdi::kit::rfg {
                             $it pushUp
                         }
                     }
-                    [:findChildByProperty name prog_clko] pushUp
+                    
                 }
 
 

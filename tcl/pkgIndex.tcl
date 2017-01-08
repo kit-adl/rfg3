@@ -5,6 +5,7 @@ package ifneeded odfi::rfg::stdlib  3.0.0            [list source $dir/stdlib/rf
 
 package ifneeded odfi::rfg::generator::html 3.0.0   [list source $dir/generator-html/html-generator.tm] 
 package ifneeded odfi::rfg::generator::h2dl 3.0.0   [list source $dir/generator-h2dl/h2dl-generator.tm] 
+package ifneeded odfi::rfg::generator::xml  3.0.0   [list source $dir/generator-xml/xml-generator.tm] 
 
 package ifneeded odfi::rfg::generator::caddress 1.0.0   [list source $dir/generator-caddress/caddress-generator.tm] 
 

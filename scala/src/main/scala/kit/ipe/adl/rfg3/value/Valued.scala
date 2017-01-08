@@ -35,12 +35,23 @@ trait Valued extends AttributesContainer {
   
   // Read More than one value
   //-------------
-  def value(size:Int = 1)   = {
+  def value(size:Int = 1) : RegisterTransactionBuffer   = {
     var du = new DataUnit
     du("size" -> size)
     valueBuffer.pull(du)
     this.valueBuffer
   }
+  
+  // Write More than one value
+  //-------------
+  def value(arr:Array[Long]): RegisterTransactionBuffer   = {
+    var du = new DataUnit
+    du("size" -> arr.length)
+    du("buffer" -> arr)
+    valueBuffer.push(du)
+    this.valueBuffer
+  }
+  
   
   
   

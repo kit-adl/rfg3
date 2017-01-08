@@ -5,7 +5,7 @@ module ftdi_interface_top(
     input wire  res_n,
 
     //interface to FTDI 2232H
-    input   wire            prog_clko,
+    input   wire            FTDI_CLK,
     input   wire            FTDI_TXE_N,
     input   wire            FTDI_RXF_N,
 
@@ -19,9 +19,13 @@ module ftdi_interface_top(
     output  wire            FTDI_WR_N,
     inout   wire    [7:0]   FTDI_DATA,
     
+    output wire FTDI_SIWUN
+    
     
 );
 
+
+assign FTDI_SIWUN = 1'b1;
 
 
 //-- FIFO Connection
@@ -87,7 +91,7 @@ assign readFIFO_wr_en   = ~FTDI_RXF_N && ~FTDI_RD_N;
 // FIFO for writing to the FTDI
 //----------------------
 async_fifo_ftdi writeFIFO_I (
-	.rd_clk(prog_clko),
+	.rd_clk(FTDI_CLK),
 	.rd_en(writeFIFO_rd_en || ~res_n),
 	.rst(~res_n),
     .dout(data2ftdi),
@@ -111,7 +115,7 @@ async_fifo_ftdi readFIFO_I (
 	.rd_clk(clk),
 	.rd_en(ri_read),
 	.rst(~res_n),
-	.wr_clk(prog_clko),
+	.wr_clk(FTDI_CLK),
 	.wr_en(readFIFO_wr_en),
 	.almost_empty(ri_almost_empty),
 	.almost_full(readFIFO_almost_full),
@@ -122,7 +126,7 @@ async_fifo_ftdi readFIFO_I (
 
 //controlling FSM
 ftdi_interface_control_fsm fsm_I ( 
-    .clk(prog_clko), 
+    .clk(FTDI_CLK), 
     .res_n(res_n), 
     .rxf_n(FTDI_RXF_N), 
     .txe_n(FTDI_TXE_N), 

@@ -28,10 +28,10 @@ import kit.ipe.adl.rfg3.device.Device
 import kit.ipe.adl.rfg3.value.RegisterTransactionException
 import org.scalatest.BeforeAndAfter
 import org.scalatest.GivenWhenThen
-import org.scalatest.matchers.ShouldMatchers
 import kit.ipe.adl.rfg3.model.RegisterFile
 import kit.ipe.adl.rfg3.language.DummyRegisterfileHost
 import org.scalatest.FeatureSpec
+import org.scalatest.Matchers
 
 
 
@@ -74,7 +74,7 @@ import org.scalatest.FeatureSpec
 
   }
 
-class RegisterFileTransactionTest extends FeatureSpec with ShouldMatchers with GivenWhenThen with BeforeAndAfter with BeforeAndAfterEach {
+class RegisterFileTransactionTest extends FeatureSpec with Matchers with GivenWhenThen with BeforeAndAfter with BeforeAndAfterEach {
 
   var registerfile: RegisterFile = _
 
@@ -147,7 +147,7 @@ class RegisterFileTransactionTest extends FeatureSpec with ShouldMatchers with G
       And("A test Device")
 
       var testDevice = new TestDevice
-      Device.targetDevice = testDevice
+      Device.targetDevice =  Some(testDevice)
 
       Then("Getting buffer value should return reset value from register")
 
@@ -176,7 +176,7 @@ class RegisterFileTransactionTest extends FeatureSpec with ShouldMatchers with G
       And("A test Device")
 
       var testDevice = new TestDevice
-      Device.targetDevice = testDevice
+      Device.targetDevice =  Some(testDevice)
 
       Then("Write 80 to the data buffer and commit transaction should give 80 to the test device")
 
@@ -197,7 +197,7 @@ class RegisterFileTransactionTest extends FeatureSpec with ShouldMatchers with G
       Given("A Node with RegisterFile and Simple Simulation Device")
 
       var nodeObj = new TestNode(this.registerfile, 0)
-      Device.targetDevice = new SimpleSimulationDevice
+      Device.targetDevice =  Some(new SimpleSimulationDevice)
 
       Then("Do Some stuff on its registerfile")
 
@@ -224,7 +224,7 @@ class RegisterFileTransactionTest extends FeatureSpec with ShouldMatchers with G
       var node0Obj = new TestNode(this.registerfile, 0)
       var node01Obj = new TestNode(this.registerfile, 1)
       var testDevice = new SimpleSimulationDevice
-      Device.targetDevice = testDevice
+      Device.targetDevice =  Some(testDevice)
 
       Then("Write Two Values")
       node0Obj onRegisterFile {
@@ -249,7 +249,7 @@ class RegisterFileTransactionTest extends FeatureSpec with ShouldMatchers with G
       Given("A Node with RegisterFile and Simple Simulation Device")
 
       var nodeObj = new TestNode(this.registerfile, 0)
-      Device.targetDevice = new SimpleSimulationDevice
+      Device.targetDevice =  Some(new SimpleSimulationDevice)
 
       Then("Change id field value of node register")
 

@@ -24,8 +24,6 @@ import com.idyria.osi.ooxoo.core.buffers.structural.BaseBufferTrait
 import com.idyria.osi.ooxoo.core.buffers.structural.DataUnit
 import kit.ipe.adl.rfg3.language.RegisterFileHost
 import kit.ipe.adl.rfg3.model.AttributesContainer
-import kit.ipe.adl.rfg3.device.Device
-import kit.ipe.adl.rfg3.device.Device
 
 /**
  *
@@ -70,7 +68,11 @@ class DeviceInterfaceBuffer extends BaseBufferTrait {
       
       case Some((host: Device, target)) =>
 
-        var absoluteAddress = target.findAttributeLong("software.osys::rfg::absolute_address").get
+        var absoluteAddress = target.findAttributeLong("::odfi::rfg::address.absolute") match {
+          case Some(addr) => addr
+          case None => target.findAttributeLong("software.osys::rfg::absolute_address").get
+        }
+       // println("Try read from: "+absoluteAddress)
         host.readRegister(host.id, absoluteAddress,readSize) match {
           case Some(value) => 
               du.value = value(0).toString
@@ -83,7 +85,11 @@ class DeviceInterfaceBuffer extends BaseBufferTrait {
       //--------
       case Some((host, target)) =>
 
-        var absoluteAddress = target.findAttributeLong("software.osys::rfg::absolute_address").get
+        var absoluteAddress = target.findAttributeLong("::odfi::rfg::address.absolute") match {
+          case Some(addr) => addr
+          case None => target.findAttributeLong("software.osys::rfg::absolute_address").get
+        }
+       //  println("Try read from: "+absoluteAddress)
         Device.readRegister(host.id, absoluteAddress,readSize) match {
           case Some(value) => 
               du.value = value(0).toString
@@ -106,6 +112,7 @@ class DeviceInterfaceBuffer extends BaseBufferTrait {
   override def pushRight(du: DataUnit) = {
 
     var value = du("buffer") match {
+      case Some( values : Array[Long]) => values
       case Some( values) => values.asInstanceOf[Array[String]].map(_.toLong) 
       case None => Array(java.lang.Long.decode(du.value).toLong)
         
@@ -120,14 +127,20 @@ class DeviceInterfaceBuffer extends BaseBufferTrait {
       //----------------
       case Some((host: Device, target)) =>
 
-        var absoluteAddress = target.findAttributeLong("software.osys::rfg::absolute_address").get
+        var absoluteAddress = target.findAttributeLong("::odfi::rfg::address.absolute") match {
+          case Some(addr) => addr
+          case None => target.findAttributeLong("software.osys::rfg::absolute_address").get
+        }
         host.writeRegister(host.id, absoluteAddress, value)
 
       // Host and Register, Use global Singleton Device
       //--------
       case Some((host, target)) =>
 
-        var absoluteAddress = target.findAttributeLong("software.osys::rfg::absolute_address").get
+        var absoluteAddress = target.findAttributeLong("::odfi::rfg::address.absolute") match {
+          case Some(addr) => addr
+          case None => target.findAttributeLong("software.osys::rfg::absolute_address").get
+        }
         Device.writeRegister(host.id, absoluteAddress,value)
       case None =>
         throw new IllegalArgumentException("Cannot Perform Device write from Data Unit because Node and/or register are missing from DataUnit context")

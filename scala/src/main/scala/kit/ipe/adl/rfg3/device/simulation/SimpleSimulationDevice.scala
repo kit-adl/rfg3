@@ -29,6 +29,8 @@ import kit.ipe.adl.rfg3.device.Device
  */
 class SimpleSimulationDevice extends Device {
 
+  
+  
   def open = {
 
   }
@@ -62,7 +64,7 @@ class SimpleSimulationDevice extends Device {
     //-----------
     this.getNodeMap(nodeId).get(address) match {
       case Some(v) => Some(Array(v))
-      case None => None
+      case None => Some(Array(0))
     }
 
   }
@@ -81,4 +83,5 @@ class SimpleSimulationDevice extends Device {
  */
 object SimpleSimulationDevice {
 
+  def apply() = new SimpleSimulationDevice
 }
