@@ -26,7 +26,7 @@ node {
           stage('Test') {
 
             if (env.BRANCH_NAME == 'master') {
-              sh "${mvnHome}/bin/mvn -B  test"
+              sh "${mvnHome}/bin/mvn -B -Dmaven.test.failure.ignore test"
             } else {
               sh "${mvnHome}/bin/mvn -B -Dmaven.test.failure.ignore test"
             }
