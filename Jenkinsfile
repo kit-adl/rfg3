@@ -12,7 +12,7 @@ node {
 
   stage("Scala Library") {
 
-    dir scala {
+    dir "scala" {
 
           stage('Clean') {
       
