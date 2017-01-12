@@ -1,6 +1,6 @@
 package kit.ipe.adl.rfg3.language
 
-import edu.kit.ipe.adl.indesign.core.harvest.HarvestedResource
+import org.odfi.indesign.core.harvest.HarvestedResource
 
 /**
  * @author zm4632

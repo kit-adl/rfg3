@@ -21,8 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package kit.ipe.adl.rfg3.device
 
 import java.lang.ref.WeakReference
-import edu.kit.ipe.adl.indesign.core.harvest.HarvestedResource
-import edu.kit.ipe.adl.indesign.core.harvest.Harvester
+import org.odfi.indesign.core.harvest.HarvestedResource
+import org.odfi.indesign.core.harvest.Harvester
 import kit.ipe.adl.rfg3.language.RegisterFileHost
 
 /**
