@@ -241,7 +241,7 @@
 		<dependency>
 			<groupId>org.odfi.wsb</groupId>
 			<artifactId>wsb-core</artifactId>
-			<version>${ooxoo.version}</version>
+			<version>3.3.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
