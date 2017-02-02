@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>kit.ipe.adl.rfg3</groupId>
 	<artifactId>rfg3-core</artifactId>
@@ -12,6 +13,10 @@
 		<version>2.12.1.r2</version>
 	</parent>
 
+	<properties>
+		<ooxoo.version>3.2.2</ooxoo.version>
+	</properties>
+
 
 	<!-- SCM -->
 	<!-- #### -->
@@ -24,27 +29,27 @@
 
 	<build>
 		<plugins>
-<!-- 			<plugin> -->
-<!-- 				<groupId>net.alchim31.maven</groupId> -->
-<!-- 				<artifactId>scala-maven-plugin</artifactId> -->
-<!-- 				<configuration> -->
-<!-- 					<useZincServer>true</useZincServer> -->
-<!-- 					<addZincArgs>-no-color</addZincArgs> -->
-<!-- 				</configuration> -->
-<!-- 				<executions> -->
-<!-- 					<execution> -->
-<!-- 						<id>add-source</id> -->
-<!-- 						<phase>generate-sources</phase> -->
-<!-- 						<goals> -->
-<!-- 							<goal>add-source</goal> -->
-<!-- 						</goals> -->
-<!-- 						<configuration> -->
-<!-- 							<sourceDir>${basedir}/target/generated-sources/scala</sourceDir> -->
-<!-- 						</configuration> -->
-<!-- 					</execution> -->
-<!-- 				</executions> -->
-<!-- 			</plugin> -->
-			
+			<!-- <plugin> -->
+			<!-- <groupId>net.alchim31.maven</groupId> -->
+			<!-- <artifactId>scala-maven-plugin</artifactId> -->
+			<!-- <configuration> -->
+			<!-- <useZincServer>true</useZincServer> -->
+			<!-- <addZincArgs>-no-color</addZincArgs> -->
+			<!-- </configuration> -->
+			<!-- <executions> -->
+			<!-- <execution> -->
+			<!-- <id>add-source</id> -->
+			<!-- <phase>generate-sources</phase> -->
+			<!-- <goals> -->
+			<!-- <goal>add-source</goal> -->
+			<!-- </goals> -->
+			<!-- <configuration> -->
+			<!-- <sourceDir>${basedir}/target/generated-sources/scala</sourceDir> -->
+			<!-- </configuration> -->
+			<!-- </execution> -->
+			<!-- </executions> -->
+			<!-- </plugin> -->
+
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
@@ -75,17 +80,17 @@
 					</execution>
 				</executions>
 			</plugin>
-			
-			
+
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-ooxoo-plugin</artifactId>
-				<version>3.2.1</version>
+				<version>${ooxoo.version}</version>
 				<dependencies>
 					<dependency>
 						<groupId>org.odfi.wsb</groupId>
 						<artifactId>wsb-core</artifactId>
-						<version>3.3.0</version>
+						<version>3.3.1-SNAPSHOT</version>
 					</dependency>
 				</dependencies>
 				<executions>
@@ -97,7 +102,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 			<!-- Add Scala Doc To Site -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -147,7 +152,7 @@
 
 	</build>
 
-	
+
 	<!-- Repositories to find OSI packages -->
 	<!-- ############################################## -->
 	<pluginRepositories>
@@ -201,8 +206,8 @@
 		</repository>
 		<repository>
 			<snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+				<enabled>true</enabled>
+			</snapshots>
 			<id>odfi.snapshots</id>
 			<name>odfi-snapshot</name>
 			<url>https://www.opendesignflow.org/maven/repository/snapshots/</url>
@@ -228,18 +233,18 @@
 	<!-- </distributionManagement> -->
 
 	<dependencies>
-<!-- 		<dependency> -->
-<!-- 			<groupId>com.idyria.osi.aib</groupId> -->
-<!-- 			<artifactId>aib-core</artifactId> -->
-<!-- 			<version>3.1.0</version> -->
-<!-- 		</dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>com.idyria.osi.aib</groupId> -->
+		<!-- <artifactId>aib-core</artifactId> -->
+		<!-- <version>3.1.0</version> -->
+		<!-- </dependency> -->
 		<dependency>
 			<groupId>org.odfi.wsb</groupId>
 			<artifactId>wsb-core</artifactId>
-			<version>3.3.0</version>
+			<version>${ooxoo.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency> 
+		<dependency>
 			<groupId>org.odfi.indesign</groupId>
 			<artifactId>indesign-core</artifactId>
 			<version>1.1.0-SNAPSHOT</version>
