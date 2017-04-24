@@ -4,4 +4,5 @@ set name RFG3
 
     :module tcl/devlib
     :module eda/hdl/h2dl
+    :module eda/utils
 }
