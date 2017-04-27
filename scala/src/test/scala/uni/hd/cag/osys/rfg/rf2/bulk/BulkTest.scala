@@ -7,6 +7,7 @@ import kit.ipe.adl.rfg3.language.RFLanguage
 import kit.ipe.adl.rfg3.model.RegisterFile
 import com.idyria.osi.ooxoo.core.buffers.extras.transaction.Transaction
 import org.scalatest.GivenWhenThen
+import kit.ipe.adl.rfg3.device.DeviceHarvester
 
 /**
  * @author zm4632
@@ -63,7 +64,8 @@ class BulkTest extends FunSuite with RFLanguage with GivenWhenThen {
     }
 
   }
-  Device.targetDevice =  Some(dummyDevice)
+  DeviceHarvester.cleanResources
+  Device.addAvailableDevice(dummyDevice)
 
   test("Bulk Raw Test") {
 
@@ -120,14 +122,14 @@ class BulkTest extends FunSuite with RFLanguage with GivenWhenThen {
 
     dummyDevice.open
     onBuffering(dummyHost) {
-      
-      println("TR State: "+Transaction().state)
+
+      println("TR State: " + Transaction().state)
       var reg = register("test")
       reg.read()
-      
+
       // Update 1 : 11
       //------------------------
-      
+
       // Select then update
       var a = reg.a
       a.setMemory(1)
@@ -136,13 +138,13 @@ class BulkTest extends FunSuite with RFLanguage with GivenWhenThen {
       reg.b = 1
 
       reg.write()
-      
+
       // Update 2 : 01
       //------------------------
       reg.a = 1
       reg.b = 0
       reg.write()
-      
+
       // Update 3 : 10
       //------------------------
       reg.a = 0
@@ -152,12 +154,11 @@ class BulkTest extends FunSuite with RFLanguage with GivenWhenThen {
     }
     assertResult(1)(dummyDevice.numberOfWrites)
     assertResult(3)(dummyDevice.sizeOfWrites)
-    
+
     // Values check
     assertResult(3)(dummyDevice.values(0))
     assertResult(1)(dummyDevice.values(1))
     assertResult(2)(dummyDevice.values(2))
-    
 
   }
 
