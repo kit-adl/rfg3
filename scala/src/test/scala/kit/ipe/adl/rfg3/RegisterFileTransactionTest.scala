@@ -32,47 +32,46 @@ import kit.ipe.adl.rfg3.model.RegisterFile
 import kit.ipe.adl.rfg3.language.DummyRegisterfileHost
 import org.scalatest.FeatureSpec
 import org.scalatest.Matchers
-
-
+import kit.ipe.adl.rfg3.device.DeviceHarvester
 
 // Test Purpose Implementation classes
-  //------------------
-  class TestDevice extends Device {
+//------------------
+class TestDevice extends Device {
 
-    var values = Map[Long, Long]()
+  var values = Map[Long, Long]()
 
-    var readCount = 0
+  var readCount = 0
 
-    var writeCount = 0
+  var writeCount = 0
 
-    def open = {
+  def open = {
 
-    }
+  }
 
-    def close = {
+  def close = {
 
-    }
+  }
 
-    def readRegister(nodeId: Short, address: Long,size:Int): Option[Array[Long]] = {
+  def readRegister(nodeId: Short, address: Long, size: Int): Option[Array[Long]] = {
 
-      readCount += 1
+    readCount += 1
 
-      this.values.get(address) match {
-        case Some(value) => Option(Array(value))
-        case None        => None
-      }
-
-    }
-
-    def writeRegister(nodeId: Short, address: Long, value: Array[Long]) = {
-
-      writeCount += 1
-
-      this.values = this.values + (address -> value(0))
-
+    this.values.get(address) match {
+      case Some(value) => Option(Array(value))
+      case None        => None
     }
 
   }
+
+  def writeRegister(nodeId: Short, address: Long, value: Array[Long]) = {
+
+    writeCount += 1
+
+    this.values = this.values + (address -> value(0))
+
+  }
+
+}
 
 class RegisterFileTransactionTest extends FeatureSpec with Matchers with GivenWhenThen with BeforeAndAfter with BeforeAndAfterEach {
 
@@ -90,8 +89,6 @@ class RegisterFileTransactionTest extends FeatureSpec with Matchers with GivenWh
   override def beforeEach = {
     Transaction.discardAll
   }
-
-  
 
   class TestNode(rf: RegisterFile, nid: Short) extends DummyRegisterfileHost(id = nid, registerFile = rf) {
 
@@ -147,7 +144,8 @@ class RegisterFileTransactionTest extends FeatureSpec with Matchers with GivenWh
       And("A test Device")
 
       var testDevice = new TestDevice
-      Device.targetDevice =  Some(testDevice)
+      DeviceHarvester.cleanResources
+      Device.addAvailableDevice(testDevice)
 
       Then("Getting buffer value should return reset value from register")
 
@@ -176,7 +174,8 @@ class RegisterFileTransactionTest extends FeatureSpec with Matchers with GivenWh
       And("A test Device")
 
       var testDevice = new TestDevice
-      Device.targetDevice =  Some(testDevice)
+      DeviceHarvester.cleanResources
+      Device.addAvailableDevice(testDevice)
 
       Then("Write 80 to the data buffer and commit transaction should give 80 to the test device")
 
@@ -184,7 +183,7 @@ class RegisterFileTransactionTest extends FeatureSpec with Matchers with GivenWh
       Transaction().commit
 
       assertResult(1, "Write Count must be 1")(testDevice.writeCount)
-     // assertResult(80)(testDevice.values(node.absoluteAddress))
+      // assertResult(80)(testDevice.values(node.absoluteAddress))
 
     }
 
@@ -197,7 +196,8 @@ class RegisterFileTransactionTest extends FeatureSpec with Matchers with GivenWh
       Given("A Node with RegisterFile and Simple Simulation Device")
 
       var nodeObj = new TestNode(this.registerfile, 0)
-      Device.targetDevice =  Some(new SimpleSimulationDevice)
+      DeviceHarvester.cleanResources
+      Device.addAvailableDevice(new SimpleSimulationDevice)
 
       Then("Do Some stuff on its registerfile")
 
@@ -224,7 +224,8 @@ class RegisterFileTransactionTest extends FeatureSpec with Matchers with GivenWh
       var node0Obj = new TestNode(this.registerfile, 0)
       var node01Obj = new TestNode(this.registerfile, 1)
       var testDevice = new SimpleSimulationDevice
-      Device.targetDevice =  Some(testDevice)
+      DeviceHarvester.cleanResources
+      Device.addAvailableDevice(testDevice)
 
       Then("Write Two Values")
       node0Obj onRegisterFile {
@@ -249,7 +250,8 @@ class RegisterFileTransactionTest extends FeatureSpec with Matchers with GivenWh
       Given("A Node with RegisterFile and Simple Simulation Device")
 
       var nodeObj = new TestNode(this.registerfile, 0)
-      Device.targetDevice =  Some(new SimpleSimulationDevice)
+      DeviceHarvester.cleanResources
+      Device.addAvailableDevice(new SimpleSimulationDevice)
 
       Then("Change id field value of node register")
 
