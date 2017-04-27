@@ -83,9 +83,9 @@ object Device extends Device {
 
   override def getId = "TopDevice"
 
-  var targetDevice: Option[Device] = None
+ // var targetDevice: Option[Device] = None
 
-  var availableDevices = List[WeakReference[Device]]()
+ // var availableDevices = List[Device]()
 
   // Device Management
   //--------------
@@ -94,7 +94,9 @@ object Device extends Device {
    * Add new avaible devices and clean old references as well
    */
   def addAvailableDevice(d: Device) = {
-    this.availableDevices = this.availableDevices.filter(p => p.get != null) :+ new WeakReference(d)
+   // this.availableDevices = this.availableDevices.filter(p => p.get != null) :+ d
+    //this.availableDevices = this.availableDevices :+ d
+    DeviceHarvester.gatherDirect(d)
     d
   }
 
@@ -111,10 +113,10 @@ object Device extends Device {
     // Look into Device Harvester
     // If a device is a host and with same ID, use it
     DeviceHarvester.getResourcesOfType[RegisterFileHost].find { h => h.id == nodeId } match {
-      case Some(d) =>
+      case Some(d) if(d.hasDerivedResourceOfType[Device]) =>
         //println(s"Device id $nodeId found as DeviceHost")
-        d.asInstanceOf[Device]
-      case None =>
+        d.getDerivedResources[Device].head
+      case other =>
         
         DeviceHarvester.getResource[Device] match {
           case Some(d) => d
