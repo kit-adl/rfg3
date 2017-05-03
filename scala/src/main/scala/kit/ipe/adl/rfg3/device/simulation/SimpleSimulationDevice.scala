@@ -29,7 +29,7 @@ import kit.ipe.adl.rfg3.device.Device
  */
 class SimpleSimulationDevice extends Device {
 
-  
+  isPhysical = false
   
   def open = {
 

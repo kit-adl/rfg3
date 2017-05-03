@@ -26,35 +26,37 @@ import org.odfi.indesign.core.harvest.Harvester
 import kit.ipe.adl.rfg3.language.RegisterFileHost
 
 /**
- *
- * Common trait for a Device to which we can read/write registers to
- *
- * @author rleys
- *
- */
+  *
+  * Common trait for a Device to which we can read/write registers to
+  *
+  * @author rleys
+  *
+  */
 trait Device extends HarvestedResource {
+
+  var isPhysical = true
 
   def getId = getClass.getCanonicalName
 
   /**
-   * Should throw an exception if the Device could not be opened
-   */
+    * Should throw an exception if the Device could not be opened
+    */
   def open
 
   /**
-   * Frees resources
-   */
+    * Frees resources
+    */
   def close
 
   /**
-   * Should Return a Long value for the register @ provided address
-   *
-   */
+    * Should Return a Long value for the register @ provided address
+    *
+    */
   def readRegister(nodeId: Short, address: Long, size: Int): Option[Array[Long]]
 
   /**
-   * Writes the register value @ provided address
-   */
+    * Writes the register value @ provided address
+    */
   def writeRegister(nodeId: Short, address: Long, value: Array[Long])
 
 }
@@ -72,29 +74,29 @@ object DeviceHarvester extends Harvester {
 }
 
 /**
- * The Device Singleton is the Read/Write interface for registers
- *
- * It delivers read/writes to the underlying Device implementation.
- * Thus there is only one active Device interface at any time,  but this is the whished behavior
- *
- *
- */
+  * The Device Singleton is the Read/Write interface for registers
+  *
+  * It delivers read/writes to the underlying Device implementation.
+  * Thus there is only one active Device interface at any time,  but this is the whished behavior
+  *
+  *
+  */
 object Device extends Device {
 
   override def getId = "TopDevice"
 
- // var targetDevice: Option[Device] = None
+  // var targetDevice: Option[Device] = None
 
- // var availableDevices = List[Device]()
+  // var availableDevices = List[Device]()
 
   // Device Management
   //--------------
 
   /**
-   * Add new avaible devices and clean old references as well
-   */
+    * Add new avaible devices and clean old references as well
+    */
   def addAvailableDevice(d: Device) = {
-   // this.availableDevices = this.availableDevices.filter(p => p.get != null) :+ d
+    // this.availableDevices = this.availableDevices.filter(p => p.get != null) :+ d
     //this.availableDevices = this.availableDevices :+ d
     DeviceHarvester.gatherDirect(d)
     d
@@ -107,35 +109,26 @@ object Device extends Device {
       case e: DeviceError => None
     }
   }
+
   def getDevice(nodeId: Int) = {
-    
+
     //println("Looking for device id: "+nodeId)
     // Look into Device Harvester
     // If a device is a host and with same ID, use it
     DeviceHarvester.getResourcesOfType[RegisterFileHost].find { h => h.id == nodeId } match {
-      case Some(d) if(d.hasDerivedResourceOfType[Device]) =>
+      case Some(d) if (d.hasDerivedResourceOfType[Device]) =>
         //println(s"Device id $nodeId found as DeviceHost")
         d.getDerivedResources[Device].head
       case other =>
-        
-        DeviceHarvester.getResource[Device] match {
-          case Some(d) => d
-          case None => 
-            throw new DeviceError("Cannot find a usable RFG Device: No target device set, and no available devices")
-        }
-        
-        /*targetDevice match {
-          case None =>
 
-            // Get available devices by cleaning old references first
-            this.availableDevices = this.availableDevices.filter(p => p.get != null)
-            this.availableDevices.size match {
-              case 0 => throw new DeviceError("Cannot find a usable RFG Device: No target device set, and no available devices")
-              case 1 => this.availableDevices.head.get
-              case _ => throw new DeviceError("Cannot find a usable RFG Device: No target device set, and multiple available devices")
-            }
+
+
+        DeviceHarvester.getResourcesOfType[Device].sortBy(_.isPhysical).headOption match {
           case Some(d) => d
-        }*/
+          case None =>
+            throw new DeviceError("Cannot find a usable Physical RFG Device: No target device set, and no available devices")
+        }
+
     }
 
   }
@@ -152,15 +145,37 @@ object Device extends Device {
 
   def readRegister(nodeId: Short, address: Long, size: Int): Option[Array[Long]] = {
 
-    this.getDevice(nodeId).readRegister(nodeId, address, size)
+    val d = this.getDevice(nodeId)
+    val res = d.readRegister(nodeId, address, size)
+
+    //-- Also call read on non physical devices, to allow catching for debug
+    DeviceHarvester.getResourcesOfType[Device].filterNot(_ == d).foreach {
+      d =>
+        keepErrorsOn(this) {
+          d.readRegister(nodeId, address, size)
+        }
+
+    }
+    res
 
   }
 
   def writeRegister(nodeId: Short, address: Long, value: Array[Long]) = {
 
-    this.getDevice(nodeId).writeRegister(nodeId, address, value)
+    val d = this.getDevice(nodeId)
+    d.writeRegister(nodeId, address, value)
+
+    //-- Also call read on non physical devices, to allow catching for debug
+    DeviceHarvester.getResourcesOfType[Device].filterNot(_ == d).foreach {
+      d =>
+        keepErrorsOn(this) {
+          d.writeRegister(nodeId, address, value)
+        }
+
+    }
 
   }
 
 }
+
 class DeviceError(str: String) extends RuntimeException(str)

@@ -27,8 +27,11 @@ trait Valued extends AttributesContainer {
    *
    * @group rf
    */
-  def value_=(data: Double) = this.valueBuffer.set(data)
-  
+  def value_=(data: Double) : Unit = this.valueBuffer.set(data)
+  def value_=(data: Boolean) : Unit = data match {
+    case v if(v) => value = 1
+    case v =>  value = 0
+  }
   def setMemory(data:Double) = this.valueBuffer.data = data
   
   def getMemory = this.valueBuffer.data
