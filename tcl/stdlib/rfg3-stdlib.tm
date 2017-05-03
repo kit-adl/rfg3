@@ -32,60 +32,7 @@ namespace eval odfi::rfg::stdlib {
                 :attribute odfi::rfg::hardware rw ro
                 :attribute odfi::rfg::software rw wo
             }
-            ## Use generator 
-            +method generateXilinxSimpleFifo  args {
-                odfi::log::info "Generating FIFO as Xilinx XCO Module"
-
-                ## Check
-                odfi::log::info "The FIFO width should be a power of 2"
-                odfi::log::info "Actual width ${:width}"
-
-                ## Get number of bits required for width, and matching power of 2 value
-                set fifoWidth [expr 2**int(ceil(log(${:width})/log(2)))]
-                odfi::log::info "FIFO width ${fifoWidth}"
-
-                ## Create XCO File for the output 
-                ##########
-                set xcoFileContent [odfi::richstream::template::fileToString ${::odfi::rfg::stdlib::stdlibLocation}/fifo/rfg_fifo_xilinx_xco.template]
-                :attribute ::odfi::h2dl sourceFile [list ${:fifoName}.xco $xcoFileContent]
-
-
-                ## Create Module Instance
-                ################
-                set fifoModule [::odfi::h2dl::module ${:fifoName} {
-                    :attribute ::odfi::h2dl blackbox true
-                    :input rst {
-                        :attribute ::odfi::rfg::h2dl reset true
-                    }
-                    :input wr_clk
-                    :input rd_clk {
-                        :attribute ::odfi::rfg::h2dl clock true
-                    }
-                    
-                    :input d_in {
-                        :width set 63
-                    }
-                    :input wr_en 
-                    :input rd_en {
-                        :attribute ::odfi::rfg::h2dl read_enable true
-                    }
-                    :output d_out {
-                        :width set 8
-                        :attribute ::odfi::rfg::h2dl data true
-                    }
-                    :output full 
-                    :output almost_full
-                    :output empty
-                    :output almost_empty
-                    
-
-                }]
-
-                ## Add a Instance of this module
-                set instance [:addChild [$fifoModule createInstance ${:name}]]
-                #$fifoModule
-
-            }
+            
             
             +method useXilinxSimpleFifo  args {
                 odfi::log::info "Generating FIFO as Xilinx XCO Module"
@@ -190,6 +137,72 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
             :attribute odfi::rfg::software rw w
         }
         
+        ## XILINX XCO
+        ##########################
+        ## Use generator 
+        +method generateXCOFIFO  args {
+
+            odfi::log::info "Generating FIFO as Xilinx XCO Module"
+
+            ## Check
+            odfi::log::info "The FIFO width should be a power of 2"
+            odfi::log::info "Actual width [:getWidth]"
+
+            ## Get number of bits required for width, and matching power of 2 value
+            set fifoWidth [expr 2**int(ceil(log([:getWidth])/log(2)))]
+            odfi::log::info "FIFO width ${fifoWidth}"
+
+            ## Create XCO File for the output 
+            ##########
+            set xcoFileContent [odfi::richstream::template::fileToString ${::odfi::rfg::stdlib::stdlibLocation}/fifo/rfg_fifo_xilinx_xco.template]
+            
+
+
+            ## Create Module Instance
+            ################
+            set fifoModule [::odfi::h2dl::module [:getHierarchyName]_fifo {
+                :attribute ::odfi::h2dl blackbox true
+                :input rst {
+                    :attribute ::odfi::rfg::h2dl reset true
+                }
+                :input wr_clk
+                :input rd_clk {
+                    :attribute ::odfi::rfg::h2dl clock true
+                }
+                
+                :input d_in {
+                    :width set $fifoWidth
+                    :attribute ::odfi::rfg::h2dl data_in true
+                }
+                :input wr_en {
+                    :attribute ::odfi::rfg::h2dl write_enable true   
+                }
+                :input rd_en {
+                    :attribute ::odfi::rfg::h2dl read_enable true
+
+                }
+                :output d_out {
+                    :width set $fifoWidth
+                    :attribute ::odfi::rfg::h2dl data_out true
+                }
+                :output full 
+                :output almost_full
+                :output empty
+                :output almost_empty
+                
+
+            }]
+
+            ## Add a Instance of this module
+            $fifoModule attributeAppend ::odfi::verilog companions [list ${:name}.xco $xcoFileContent]
+            :addChild $fifoModule
+            #set instance [:addChild [$fifoModule createInstance ${:name}]]
+            #$fifoModule
+
+        }
+
+
+
         ## XILINX XCI Format support
         ###########
         +method useXilinxXCIFifo xciFile {

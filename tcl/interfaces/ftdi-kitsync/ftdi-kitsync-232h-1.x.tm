@@ -18,9 +18,11 @@ namespace eval ::ftdi::kit::rfg {
 odfi::language::nx::new ::ftdi::kit::rfg {
 
     :sync : ::odfi::rfg::Interface name {
+
         +exportToPublic
         +exportTo ::odfi::h2dl::Module ftdi232hkit
         +expose name
+        
         +var outputOrderSorter false
         
         +builder {

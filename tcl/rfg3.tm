@@ -40,7 +40,17 @@ namespace eval odfi::rfg {
 
             +method getHierarchyName {{separator _}} {
 
-                return [:shade { return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[:name get]
+                set hierName [:shade { 
+                            return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]
+                            } formatHierarchyString {$it name get} _]
+                if {$hierName==""} {
+                    return [:name get]
+                } else {
+                    return [join [list $hierName [:name get]] _]
+                }
+                puts "Hier Name of: [:name get] is $hierName"
+                return [join [list $hierName [:name get]] _]
+                #return [:shade { return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[:name get]
 
             }
         }
@@ -359,13 +369,34 @@ namespace eval odfi::rfg {
                         }
                     }
                 }
+
+                ## Returns empty string if not found
+                +method findInterface args {
+
+                    return  [:findParentInPrimaryLine {$it isClass ::odfi::rfg::Interface}]
+                 
+
+                }
                 
+                ## Width is sum of Fields of default size
                 +method getWidth args {
                     
-                    set sum 0
-                    [:shade ::odfi::rfg::Field children] @> map {return [$it width get]} @> foreach {
-                        set sum [expr $sum + $it]
+                    if {[:shade odfi::rfg::Field firstChild]==""} {
+                        set interface [:findInterface]
+                        if {$interface==""} {
+                            return 0
+                        } else {
+                        puts "Reg get width: [$interface info class]"
+                            return [$interface registerSize get]
+                        }
+                       
+                    } else {
+                        set sum 0 s
+                        [:shade ::odfi::rfg::Field children] @> map {return [$it width get]} @> foreach {
+                         set sum [expr $sum + $it]
+                        }
                     }
+                    
                     
                     
                     return $sum

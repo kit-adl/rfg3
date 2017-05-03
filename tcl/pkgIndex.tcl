@@ -10,5 +10,6 @@ package ifneeded odfi::rfg::generator::xml  3.0.0   [list source $dir/generator-
 package ifneeded odfi::rfg::generator::caddress 1.0.0   [list source $dir/generator-caddress/caddress-generator.tm] 
 
 ## Interfaces
-package ifneeded odfi::rfg::interface::ftdi232h     1.0.0 [list source $dir/interfaces/ftdi/ftdi-232h-1.x.tm] 
-package ifneeded odfi::rfg::interface::ftdi232hkitsync 1.0.0 [list source $dir/interfaces/ftdi-kitsync/ftdi-kitsync-232h-1.x.tm] 
+package ifneeded odfi::rfg::interface::ftdi232h         1.0.0 [list source $dir/interfaces/ftdi/ftdi-232h-1.x.tm] 
+package ifneeded odfi::rfg::interface::ftdi232hkitsync  1.0.0 [list source $dir/interfaces/ftdi-kitsync/ftdi-kitsync-232h-1.x.tm] 
+package ifneeded odfi::rfg::interface::epp 				1.0.0 [list source $dir/interfaces/epp/epp-interface.tm] 

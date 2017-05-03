@@ -21,6 +21,9 @@ namespace eval  ::odfi::rfg::generator::xml {
                 ## Use Reduce Plus
                 set res [:reducePlus {
                 
+
+                    //puts "Testing node/: [$node name get] -> [$node info class]"
+
                     if {[$node isClass ::odfi::rfg::RegisterFile]} {
                     
                         return "<RegisterFile name=\"[$node name get]\">[$results @> map { return [lindex $it 1]} @> mkString]</RegisterFile>"
