@@ -8,6 +8,7 @@ package require odfi::language::nx 1.0.0
 #puts "power of 2 for $width : [expr 2**int(ceil(log($width)/log(2)))] -> [expr 2**6] "
 #exit 0
 
+
 namespace eval odfi::rfg::stdlib {
 
     variable stdlibLocation [file dirname [file normalize [info script]]]
@@ -28,6 +29,7 @@ namespace eval odfi::rfg::stdlib {
                 :attribute odfi::rfg::software rw ro
                 set :fifoName ${:name}
             }
+
             +method setHWRead args {
                 :attribute odfi::rfg::hardware rw ro
                 :attribute odfi::rfg::software rw wo
@@ -144,6 +146,8 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
 
             odfi::log::info "Generating FIFO as Xilinx XCO Module"
 
+
+
             ## Check
             odfi::log::info "The FIFO width should be a power of 2"
             odfi::log::info "Actual width [:getWidth]"
@@ -151,6 +155,29 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
             ## Get number of bits required for width, and matching power of 2 value
             set fifoWidth [expr 2**int(ceil(log([:getWidth])/log(2)))]
             odfi::log::info "FIFO width ${fifoWidth}"
+
+            ## Get Depth 
+            if {![:hasAttribute hw depth]} {
+                error "Cannot generate Xilinx FIFO if no hw.depth attribute is set in: [odfi::common::describeCallerLocation]"
+            }
+            set depth [:attribute hw depth]
+
+            ## Reset 
+            set reset_type "Asynchronous_Reset"
+            if {[:attributeMatch hw reset synchronous]} {
+                set reset_type "Synchronous_Reset"
+            }
+
+            ## Device
+            if {[:hasAttribute xilinx device]} {
+                set xDevice     [split [:attribute xilinx device] :]
+                set xPackage    [lindex $xDevice 2]
+                set xFamily     [lindex $xDevice 0]
+                set xDevice     [lindex $xDevice 1]
+            } else {
+                error "Please provide an DEVICE:PACKAGE attribute under :attribute xilinx device"
+            }
+
 
             ## Create XCO File for the output 
             ##########
@@ -160,12 +187,14 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
 
             ## Create Module Instance
             ################
-            set fifoModule [::odfi::h2dl::module [:getHierarchyName]_fifo {
+            set fifoModule [::odfi::h2dl::module [:getHierarchyName] {
                 :attribute ::odfi::h2dl blackbox true
                 :input rst {
                     :attribute ::odfi::rfg::h2dl reset true
                 }
-                :input wr_clk
+                :input wr_clk {
+                    :attribute ::odfi::rfg::h2dl clock true
+                }
                 :input rd_clk {
                     :attribute ::odfi::rfg::h2dl clock true
                 }
@@ -194,7 +223,7 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
             }]
 
             ## Add a Instance of this module
-            $fifoModule attributeAppend ::odfi::verilog companions [list ${:name}.xco $xcoFileContent]
+            $fifoModule attributeAppend ::odfi::verilog companions [list [list [:getHierarchyName].xco $xcoFileContent]]
             :addChild $fifoModule
             #set instance [:addChild [$fifoModule createInstance ${:name}]]
             #$fifoModule

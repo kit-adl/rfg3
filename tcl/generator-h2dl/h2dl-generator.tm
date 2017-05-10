@@ -51,7 +51,7 @@ namespace eval odfi::rfg::generator::h2dl {
                 }
 
                 ## Create Module 
-                set module [:toModule2]
+                set module [:toModule]
                 $module apply $module_closure 
                 puts "Returned value: [$module info class]"
 
@@ -72,7 +72,7 @@ namespace eval odfi::rfg::generator::h2dl {
 
 
             ## Create an H2DL Module for the register definitinos 
-            +method toModule2 args {
+            +method toModule args {
 
                 ## Get Interface
                 set interface [current object]
@@ -191,36 +191,42 @@ namespace eval odfi::rfg::generator::h2dl {
                     ##############
                     $rf walkDepthFirstPreorder -level 1 {
 
+                        #puts "Found node : $node -> [$node name get] -> [$node info class]"
+                        if {[$node isClass odfi::attributes::AttributeGroup]} {
+                            return false
+                        }
                         if {[$node isClass odfi::rfg::Register]} {
 
-                            set addWrite   true 
-                            set addRead    true
-                            set addHWWrite false
-                            set addHWWriteFields false
+                            ::set addWrite   true 
+                            ::set addRead    true
+                            ::set addHWWrite false
+                            ::set addHWWriteFields false
 
                             ## Create Default Register , or use provided H2DL result
                             ## H2DL Support means the register instance can provide an implementation alternative
                             ## it can be a module of a write posedge block for example
                             if {[$node isClass odfi::rfg::generator::h2dl::H2DLSupport]} {
 
+                                #puts "Supported H2Dl , creating..."
                                 set h2dlNode [$node h2dl:produce [current object]]
                                 :addChild $h2dlNode
 
-                                puts "Supported H2Dl Register created: [$h2dlNode info class]"
+                                #puts "Supported H2Dl Register created: [$h2dlNode info class]"
                                 ## If the provided node is a module, then we can find special IOs for Interface
                                 if {[$h2dlNode isClass ::odfi::h2dl::Module]} {
 
-                                    set addWrite false 
-                                    set addRead  false
+                                    ::set addWrite false 
+                                    ::set addRead  false
 
                                     set h2dlModuleInstanceForReg [$h2dlNode createInstance [$node getHierarchyName]]
                                     :addChild $h2dlModuleInstanceForReg
                                     
                                     ## Look through IOs and make connections
+                                    #puts "Looking through io..."
                                     $h2dlModuleInstanceForReg shade odfi::h2dl::IO eachChild {
                                         {io i} =>
 
-                                            puts "Found and IO: [$io name get] -> [$io hasAttribute ::odfi::rfg::h2dl reset]"
+                                            #puts "Found and IO: [$io name get] -> [$io hasAttribute ::odfi::rfg::h2dl reset]"
                                             ## Connect IOs with supported attribute
                                             ## Other IOs are just pushed_up
                                             if {[$io hasAttribute ::odfi::rfg::h2dl clock]} {
@@ -229,27 +235,27 @@ namespace eval odfi::rfg::generator::h2dl {
                                             } elseif {[$io hasAttribute ::odfi::rfg::h2dl reset]} {
                                                 
                                                 ## Reset pin is connected to standard reset
-                                                set mainResetConnection ""
+                                                ::set mainResetConnection ""
                                                 
                                                 if {[$io getAttribute ::odfi::rfg::h2dl reset]=="posedge"} {
-                                                    set mainResetConnection "![$res_n name get]"
+                                                    ::set mainResetConnection "![$res_n name get]"
                                                     #$io connection "! [$res_n name get]"
                                                 } else {
-                                                    set mainResetConnection "$res_n"
+                                                    ::set mainResetConnection "$res_n"
                                                     #$io connection "$res_n"
                                                 }
                                                 
                                                 ## If the reset is soft, then add an input and mux it
                                                 if {[$io hasAttribute ::odfi::rfg::h2dl soft_reset]} {
                                                 
-                                                    set softResetPin ""
+                                                    ::set softResetPin ""
                                                     if {[$io getAttribute ::odfi::rfg::h2dl reset]=="posedge"} {
-                                                        set softResetPin [$rfgModule input [$node getHierarchyName]_reset]
+                                                        ::set softResetPin [$rfgModule input [$node getHierarchyName]_reset]
                                                     } else {
-                                                        set softResetPin [$rfgModule input [$node getHierarchyName]_resn]
+                                                        ::set softResetPin [$rfgModule input [$node getHierarchyName]_resn]
                                                     }
                                                     
-                                                    set mainResetConnection " ( $mainResetConnection ) | [$softResetPin name get]"
+                                                    ::set mainResetConnection " ( $mainResetConnection ) | [$softResetPin name get]"
                                                 }
                                                 
                                                 ## make connection
@@ -257,63 +263,102 @@ namespace eval odfi::rfg::generator::h2dl {
                                                 
                                             } elseif {[$io hasAttribute ::odfi::rfg::h2dl read_enable]} {
 
-                                                ## Add read enable to module to control this module
-                                                ##########
-                                                set read_enable [$rfgModule register [$node getHierarchyName]_read_enable]
-                                                $io connection $read_enable
-                                                
-                                                ## don't forget reset
-                                                $readReset apply {
-                                                    $read_enable <= 0
-                                                }
-                                                
-                                                ## This module's read is controled separately from other regs to make sure read_enable is always 
-                                                ## reset correctly
-                                                ## Read Else is the main clock in read posedge
-                                                $readIf apply {
-                                                    :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
+
+                                                ## Create Read enable locally width software read only if software read enabled
+                                                if {[$node isSoftwareRead]} {
+
+
+
+                                                    ## Add read enable to module to control this module
+                                                    ##########
+                                                    ::set read_enable [$rfgModule register [$node getHierarchyName]_read_enable]
+                                                    $io connection $read_enable
                                                     
-                                                        ## Map Read data to module out
-                                                        set dataOutIO [$h2dlModuleInstanceForReg shade odfi::h2dl::Output findFirstChild {$it hasAttribute ::odfi::rfg::h2dl data_out}]
-                                                        if {$dataOutIO==""} {
-                                                            odfi::log::error "Cannot Create read for reg with Module implementation [$node getHierarchyName] because no IO has the attribute ::odfi::rfg::h2dl data_out" 
-                                                        } else {
-                                                            #set targetSignal [$dataOutIO pushUp [$node getHierarchyName]]
-                                                            set targetSignal [$rfgModule shade odfi::h2dl::IO findChildByProperty name [$node getHierarchyName]_[$dataOutIO name get]]
-                                                            #set targetSignal [$rfgModule output [$node getHierarchyName]_[$dataOutIO name get]]
-                                                            #$dataOutIO connection $targetSignal
-                                                        }
-                                                        
-                                                        $read_data <= $targetSignal
-                                                        
-                                                        ## set read to 1
-                                                        $read_enable <= 1
-                                                        
-                                                        ## Set Done 
-                                                        $done <= 1
-                                                    }
-                                                    :else {
-                                                    
-                                                        ## set read to 0 in normal case, but also if no read at all is provided
+                                                    ## don't forget reset
+                                                    $readReset apply {
                                                         $read_enable <= 0
-                                                        $notReadElse apply {
+                                                    }
+                                                    
+                                                    ## This module's read is controled separately from other regs to make sure read_enable is always 
+                                                    ## reset correctly
+                                                    ## Read Else is the main clock in read posedge
+                                                    $readIf apply {
+                                                        :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
+                                                        
+                                                            ## Map Read data to module out
+                                                            set dataOutIO [$h2dlModuleInstanceForReg shade odfi::h2dl::Output findFirstChild {$it hasAttribute ::odfi::rfg::h2dl data_out}]
+                                                            if {$dataOutIO==""} {
+                                                                odfi::log::error "Cannot Create read for reg with Module implementation [$node getHierarchyName] because no IO has the attribute ::odfi::rfg::h2dl data_out" 
+                                                            } else {
+                                                                #set targetSignal [$dataOutIO pushUp [$node getHierarchyName]]
+                                                                
+                                                                #set targetSignal [$rfgModule shade odfi::h2dl::IO findChildByProperty name [$node getHierarchyName]_[$dataOutIO name get]]
+                                                                
+                                                                set targetSignal [$rfgModule wire [$node getHierarchyName]_[$dataOutIO name get]]
+                                                                $dataOutIO connection $targetSignal
+                                                            }
+                                                            
+                                                            #puts "********* MOduel target signal: $targetSignal -> [$node getHierarchyName]_[$dataOutIO name get]"
+                                                            $read_data <= "$targetSignal"
+                                                            
+                                                            ## set read to 1
+                                                            $read_enable <= 1
+                                                            
+                                                            ## Set Done 
+                                                            $done <= 1
+                                                        }
+                                                        :else {
+                                                        
+                                                            ## set read to 0 in normal case, but also if no read at all is provided
                                                             $read_enable <= 0
+                                                            $notReadElse apply {
+                                                                $read_enable <= 0
+                                                            }
                                                         }
                                                     }
+
                                                 }
                                                 
                                                 
                                                 
                                             } elseif {[$io hasAttribute ::odfi::rfg::h2dl write_enable]} {        
                                             
-                                                ## Write Enable is for this address
-                                                set weWire [$rfgModule wire [$node getHierarchyName]_write_enable]
-                                                $weWire assign "$address == [$node getAttribute ::odfi::rfg::address absolute]"
+                                                ## Match write enable to address
+                                                if {[$node isSoftwareWrite]} {
+
+                                                    ## Write Enable is for this address
+                                                    set weWire [$rfgModule wire [$node getHierarchyName]_write_enable]
+                                                    $weWire assign "$address == [$node getAttribute ::odfi::rfg::address absolute]"
+                                                    
+                                                    $io connection $weWire
+
+                                                } else {
+
+                                                    $io pushUp [$node getHierarchyName]
+
+                                                }
                                                 
-                                                $io connection $weWire
+                                            } elseif {[$io hasAttribute ::odfi::rfg::h2dl data_in]} {    
+
+                                                ## Data in is connected to write data signal for software write, otherwise made available
+                                                if {[$node isSoftwareWrite]} {
+
+                                                    ## Connect to write data
+                                                    $io connection ${:write_data}
+
+                                                } else {
+
+                                                     $io pushUp [$node getHierarchyName]
+                                                    
+                                                }
+
+                                            } elseif {[$io hasAttribute ::odfi::rfg::h2dl data_out]} {    
+
+                                                ## Data Out is connected to read block which is generated by read_enable signal handler
+                                                if {[$node isHardwareRead]} {
+                                                    $io pushUp [$node getHierarchyName]
+                                                } 
                                                 
-                                            } elseif {[$io hasAttribute ::odfi::rfg::h2dl data_in]} {        
-                                                $io connection ${:write_data}
                                             } elseif {![$io hasConnection]} {
                                                 $io pushUp [$node getHierarchyName]
                                             }
@@ -325,6 +370,8 @@ namespace eval odfi::rfg::generator::h2dl {
                                     
                                 }
                                 ## EOF if Result is a module
+
+                                puts "Supported H2Dl , done..."
 
                                 ## If it is a write section 
                                 if {[$h2dlNode hasAttribute ::odfi::rfg writeSection]} {
@@ -542,8 +589,9 @@ namespace eval odfi::rfg::generator::h2dl {
                           
 
                             }
+                            ## EOF if add write or read
 
-
+                            return false
                         }
                         ## EOF Map register
 
@@ -596,6 +644,8 @@ namespace eval odfi::rfg::generator::h2dl {
 
             
             ## Get parent 
+
+
             set parent [:shade odfi::h2dl::Module parent]
             if {$parent==""} {
                 odfi::log::info "Cannot push up interface of RFG instance if no H2Dl parent exists"

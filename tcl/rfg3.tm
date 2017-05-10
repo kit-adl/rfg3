@@ -38,18 +38,25 @@ namespace eval odfi::rfg {
         #####################
         +type RFGNode {
 
+            +var cachedHierName ""
+
             +method getHierarchyName {{separator _}} {
 
-                set hierName [:shade { 
-                            return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]
-                            } formatHierarchyString {$it name get} _]
-                if {$hierName==""} {
-                    return [:name get]
-                } else {
-                    return [join [list $hierName [:name get]] _]
+                if {${:cachedHierName}==""} {
+                    set hierName [:shade { 
+                                return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]
+                                } formatHierarchyString {$it name get} _]
+                    if {$hierName==""} {
+                        set :cachedHierName [:name get]
+                    } else {
+                        set :cachedHierName [join [list $hierName [:name get]] _]
+                    }
+                    #puts "Hier Name of: [:name get] is $hierName"
+                    #set :cachedHierName [join [list $hierName [:name get]] _]
                 }
-                puts "Hier Name of: [:name get] is $hierName"
-                return [join [list $hierName [:name get]] _]
+
+                return ${:cachedHierName}
+                
                 #return [:shade { return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[:name get]
 
             }
@@ -358,6 +365,9 @@ namespace eval odfi::rfg {
             :register : Description name {
                 +mixin ::odfi::attributes::AttributesContainer
                 +var reset 0
+                +var width -1
+
+
 
                 ## End of register, if no field, create a field with same name and width as register 
                 +builder {
@@ -368,6 +378,36 @@ namespace eval odfi::rfg {
                             #}
                         }
                     }
+                }
+
+                ##  Rights 
+                +method softwareRead args {
+
+                    :attribute ::odfi::rfg::rights sw ro
+                }
+                +method softwareWrite args {
+
+                    :attribute ::odfi::rfg::rights sw wo
+                }
+
+                +method isSoftwareRead args {
+                    return [:attributeMatch ::odfi::rfg::rights sw *r*]
+                }
+                +method isSoftwareWrite args {
+                    return [:attributeMatch ::odfi::rfg::rights sw *w*]
+                }
+
+                +method hardwareWrite args {
+                    :attribute ::odfi::rfg::rights hw wo
+                }
+                +method hardwareRead args {
+                    :attribute ::odfi::rfg::rights hw ro
+                }
+                 +method isHardwareRead args {
+                    return [:attributeMatch ::odfi::rfg::rights hw *r*]
+                }
+                +method isHardwareWrite args {
+                    return [:attributeMatch ::odfi::rfg::rights hw *w*]
                 }
 
                 ## Returns empty string if not found
