@@ -199,7 +199,7 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
                     :attribute ::odfi::rfg::h2dl clock true
                 }
                 
-                :input d_in {
+                :input din {
                     :width set $fifoWidth
                     :attribute ::odfi::rfg::h2dl data_in true
                 }
@@ -210,7 +210,7 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
                     :attribute ::odfi::rfg::h2dl read_enable true
 
                 }
-                :output d_out {
+                :output dout {
                     :width set $fifoWidth
                     :attribute ::odfi::rfg::h2dl data_out true
                 }
