@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>kit.ipe.adl.rfg3</groupId>
 	<artifactId>rfg3-core</artifactId>
-	<version>3.1.2-SNAPSHOT</version>
+	<version>3.1.2</version>
 
 	<!-- use OSI Scala Parent pom to have scala enabled -->
 	<!-- ################# -->
