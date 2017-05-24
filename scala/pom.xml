@@ -14,7 +14,9 @@
 	</parent>
 
 	<properties>
-		<ooxoo.version>3.2.3-SNAPSHOT</ooxoo.version>
+		<ooxoo.version>3.2.3</ooxoo.version>
+		<wsb.version>3.3.1</wsb.version>
+		<indesign.core.version>1.1.0</indesign.core.version>
 	</properties>
 
 
@@ -29,27 +31,6 @@
 
 	<build>
 		<plugins>
-			<!-- <plugin> -->
-			<!-- <groupId>net.alchim31.maven</groupId> -->
-			<!-- <artifactId>scala-maven-plugin</artifactId> -->
-			<!-- <configuration> -->
-			<!-- <useZincServer>true</useZincServer> -->
-			<!-- <addZincArgs>-no-color</addZincArgs> -->
-			<!-- </configuration> -->
-			<!-- <executions> -->
-			<!-- <execution> -->
-			<!-- <id>add-source</id> -->
-			<!-- <phase>generate-sources</phase> -->
-			<!-- <goals> -->
-			<!-- <goal>add-source</goal> -->
-			<!-- </goals> -->
-			<!-- <configuration> -->
-			<!-- <sourceDir>${basedir}/target/generated-sources/scala</sourceDir> -->
-			<!-- </configuration> -->
-			<!-- </execution> -->
-			<!-- </executions> -->
-			<!-- </plugin> -->
-
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
@@ -90,7 +71,7 @@
 					<dependency>
 						<groupId>org.odfi.wsb</groupId>
 						<artifactId>wsb-core</artifactId>
-						<version>3.3.1-SNAPSHOT</version>
+						<version>${wsb.version}</version>
 					</dependency>
 				</dependencies>
 				<executions>
@@ -191,39 +172,16 @@
 	</repositories>
 
 
-
-
-	<!-- Distribution -->
-	<!-- ############ -->
-	<!-- <distributionManagement> -->
-	<!-- <repository> -->
-	<!-- <id>extoll.release</id> -->
-	<!-- <name>Extoll Public Release Repository</name> -->
-	<!-- <url>https://www.extoll.de/schloss/nexus/content/repositories/releases/</url> -->
-	<!-- </repository> -->
-	<!-- <snapshotRepository> -->
-	<!-- <id>extoll.snapshot</id> -->
-	<!-- <name>Extoll Public Snapshot Repository</name> -->
-	<!-- <url>https://www.extoll.de/schloss/nexus/content/repositories/snapshots/</url> -->
-	<!-- </snapshotRepository> -->
-	<!-- </distributionManagement> -->
-
 	<dependencies>
-		<!-- <dependency> -->
-		<!-- <groupId>com.idyria.osi.aib</groupId> -->
-		<!-- <artifactId>aib-core</artifactId> -->
-		<!-- <version>3.1.0</version> -->
-		<!-- </dependency> -->
-		<dependency>
-			<groupId>org.odfi.wsb</groupId>
-			<artifactId>wsb-core</artifactId>
-			<version>3.3.1-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.odfi.indesign</groupId>
 			<artifactId>indesign-core</artifactId>
-			<version>1.1.0-SNAPSHOT</version>
+			<version>${indesign.core.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.odfi.wsb</groupId>
+			<artifactId>wsb-core</artifactId>
+			<version>${wsb.version}</version>
 		</dependency>
 	</dependencies>
 
