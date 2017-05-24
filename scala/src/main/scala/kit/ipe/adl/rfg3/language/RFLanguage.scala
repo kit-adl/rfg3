@@ -28,6 +28,7 @@ import kit.ipe.adl.rfg3.model.Field
 import kit.ipe.adl.rfg3.model.Register
 import kit.ipe.adl.rfg3.model.RamEntry
 
+import scala.language.implicitConversions
 
 /**
  * This trait provides a lightweight language to write and read from register content

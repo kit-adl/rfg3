@@ -57,6 +57,9 @@ object RF2Model extends ModelBuilder {
     isTrait
     
     attribute("reset").classType = "VerilogLongValue"
+    
+    //-- Output current value
+    attribute("currentValue") ofType "double"
 
     importElement("Field").setMultiple
 

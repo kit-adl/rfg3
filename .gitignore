@@ -1,0 +1,8 @@
+**/target/*
+scala/.cache-main
+scala/.cache-tests
+scala/.classpath
+scala/.project
+scala/.settings/org.eclipse.jdt.core.prefs
+scala/.settings/org.eclipse.m2e.core.prefs
+scala/.settings/org.scala-ide.sdt.core.prefs

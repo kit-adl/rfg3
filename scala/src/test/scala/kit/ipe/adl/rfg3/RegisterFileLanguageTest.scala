@@ -29,6 +29,8 @@ import kit.ipe.adl.rfg3.language.DummyRegisterfileHost
 import org.scalatest.FunSuite
 import kit.ipe.adl.rfg3.device.simulation.SimpleSimulationDevice
 import org.scalatest.Matchers
+import org.odfi.indesign.module.measurement.DeviceHarvester
+import kit.ipe.adl.rfg3.device.DeviceHarvester
 
 
 
@@ -40,7 +42,7 @@ class RegisterFileLanguageTest extends FunSuite with Matchers with GivenWhenThen
     //-------------
     val registerFile = RegisterFile(getClass().getClassLoader().getResource("extoll_rf.anot.xml"))
     var rfHost = new DummyRegisterfileHost(0, registerFile)
-    Device.targetDevice = Some(new SimpleSimulationDevice)
+    Device.addAvailableDevice(new SimpleSimulationDevice)
 
     // Try a script language, it must compile
     //----------------
@@ -80,7 +82,8 @@ class RegisterFileLanguageTest extends FunSuite with Matchers with GivenWhenThen
     val registerFile = RegisterFile(getClass().getClassLoader().getResource("extoll_rf.anot.xml"))
     var rfHost = new DummyRegisterfileHost(0, registerFile)
     var testDevice = new TestDevice
-    Device.targetDevice =  Some(testDevice)
+    DeviceHarvester.cleanResources
+   Device.addAvailableDevice(testDevice)
 
     // Try a script language, it must compile
     //----------------
@@ -140,7 +143,8 @@ class RegisterFileLanguageTest extends FunSuite with Matchers with GivenWhenThen
     val registerFile = RegisterFile(getClass().getClassLoader().getResource("extoll_rf.anot.xml"))
     var rfHost = new DummyRegisterfileHost(0, registerFile)
     var testDevice = new TestDevice
-    Device.targetDevice =  Some(testDevice)
+    DeviceHarvester.cleanResources
+    Device.addAvailableDevice(testDevice)
 
     new RFLanguage {
 

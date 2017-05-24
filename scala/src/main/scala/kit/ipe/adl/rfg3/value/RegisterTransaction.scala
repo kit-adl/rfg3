@@ -34,23 +34,23 @@ import kit.ipe.adl.rfg3.language.RegisterFileNode
 import com.idyria.osi.ooxoo.core.buffers.datatypes.DoubleBuffer
 
 /**
- *
- * The RegisterTransactionBuffer makes the interface between the value buffers of the various
- * Registers objects, and the Device interface that really gets the value from Device implementation
- *
- * It is linked to a standard Transacitno Buffer for transaction management
- *
- * Determining the target node is done by the transaction context, meaning this Buffer can only be used
- * if a transaction has been started, with the target node as Initiator
- *
- *
- */
+  *
+  * The RegisterTransactionBuffer makes the interface between the value buffers of the various
+  * Registers objects, and the Device interface that really gets the value from Device implementation
+  *
+  * It is linked to a standard Transacitno Buffer for transaction management
+  *
+  * Determining the target node is done by the transaction context, meaning this Buffer can only be used
+  * if a transaction has been started, with the target node as Initiator
+  *
+  *
+  */
 class RegisterTransactionBuffer(
 
-    /*
-            The register this buffer is operating on
-        */
-    var target: AttributesContainer) extends DoubleBuffer with ListeningSupport {
+                                 /*
+                                         The register this buffer is operating on
+                                     */
+                                 var target: AttributesContainer) extends DoubleBuffer with ListeningSupport {
 
   // Chain: -> TransactionBuffer -> DeviceInterfaceBuffer
   //------------
@@ -61,8 +61,8 @@ class RegisterTransactionBuffer(
   //-----------------------
 
   /**
-   * Get Current Node or throw an exception
-   */
+    * Get Current Node or throw an exception
+    */
   def getContextNode: RegisterFileNode = {
 
     // Try to get the Target node from Transaction Context
@@ -89,12 +89,12 @@ class RegisterTransactionBuffer(
 
   // Get (Override pull for this)
   //---------
-  var buffer : Array[Long] = Array(0)
-  
+  var buffer: Array[Long] = Array(0)
+
   /**
-   * Call classical Data buffer pull
-   * Check for Size requirements
-   */
+    * Call classical Data buffer pull
+    * Check for Size requirements
+    */
   override def pull(du: DataUnit): DataUnit = {
 
     // Set DataUnit Context
@@ -106,21 +106,21 @@ class RegisterTransactionBuffer(
     // Delegate To Parent
     //--------------
     var res = super.pull(du)
-    
+
     // Handle Size
     //-----------
     du("buffer") match {
-      case Some( b : Array[Long]) => buffer = b
-      case _ => 
+      case Some(b: Array[Long]) => buffer = b
+      case _ =>
     }
-    
+
     res
 
   }
 
   /**
-   * If no value returned, set to register reset value
-   */
+    * If no value returned, set to register reset value
+    */
   override def importDataUnit(du: DataUnit) = {
 
     if (du.value == null) {
@@ -132,9 +132,8 @@ class RegisterTransactionBuffer(
       }
 
     }
-    
-    
-    
+
+
     super.importDataUnit(du)
 
   }
@@ -163,47 +162,57 @@ class RegisterTransactionBuffer(
   //---------------
 
   /**
-   * Added Register + Node context to data Unit
-   */
+    * Added Register + Node context to data Unit
+    */
   override def push(du: DataUnit) = {
 
+
     // this.@->("push")
+    try {
+      // Set DataUnit Context
+      //---------------
+      var targetDU = du match {
+        case null =>
+          var d = new DataUnit
+          d.setValue(this.data.toLong.toString())
+          d
+        case d => d
+      }
 
-    // Set DataUnit Context
-    //---------------
-    var targetDU = du match {
-      case null =>
-        var d = new DataUnit
-        d.setValue(this.data.toLong.toString())
-        d
-      case d => d
+      targetDU("node" -> this.getContextNode)
+      targetDU("target" -> this.target)
+      //targetDU("buffer" -> Array(this.data.toLong))
+
+      // Delegate to parent
+      //----------
+      super.push(targetDU)
+
+    } catch {
+
+      // Transaction setup error, ignore
+      case e: RegisterTransactionException =>
+
     }
-
-    targetDU("node" -> this.getContextNode)
-    targetDU("target" -> this.target)
-    //targetDU("buffer" -> Array(this.data.toLong))
-
-    // Delegate to parent
-    //----------
-     super.push(targetDU)
 
   }
 
 }
 
 /**
- *
- * The companion object of the register transaction buffer is used to retain current running transaction informations,
- * so that single RegisterTransactionBuffers can determine if they are part of a transaction at the moment
- *
- *
- */
+  *
+  * The companion object of the register transaction buffer is used to retain current running transaction informations,
+  * so that single RegisterTransactionBuffers can determine if they are part of a transaction at the moment
+  *
+  *
+  */
 object RegisterTransactionBuffer {
 
   def apply(target: AttributesContainer) = new RegisterTransactionBuffer(target)
 
   // Conversion to/from long
-  implicit def convertValueBufferToLong(b: RegisterTransactionBuffer): Double = { b.pull(); b.data }
+  implicit def convertValueBufferToLong(b: RegisterTransactionBuffer): Double = {
+    b.pull(); b.data
+  }
 
 }
 

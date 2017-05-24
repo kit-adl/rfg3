@@ -1,23 +1,23 @@
 package kit.ipe.adl.rfg3.model
 
 
-
 /**
- * @author zm4632
- */
+  * @author zm4632
+  */
 class Group extends GroupTrait {
 
   def search(search: String): Any = {
 
     // Patterns
-    val ramEntry = """(.+)\[([0-9]+)\]$""".r
+    val ramEntry =
+      """(.+)\[([0-9]+)\]$""".r
     val ramEntryField = """(.+)\[([0-9]+)\]\.([\w]+)$""".r
     val regField = """(.+)\.([\w]+)$""".r
     val reg = """(.+)$""".r
 
     /**
-     * match more complex ram search, if not matching, easier matching falls back to Registers
-     */
+      * match more complex ram search, if not matching, easier matching falls back to Registers
+      */
     search.trim match {
 
       //-- Ram entry
@@ -30,7 +30,7 @@ class Group extends GroupTrait {
       case ramEntryField(path, entry, fieldName) =>
 
         var ram = this.ram(path)
-        var field = ram.field(fieldName) {r => }
+        var field = ram.field(fieldName) { r => }
         return field.forEntry(Integer.parseInt(entry))
 
       //-- Register Field
@@ -51,18 +51,18 @@ class Group extends GroupTrait {
   }
 
   /**
-   * Search for a regroot
-   *
-   * Search String format:
-   *
-   * xxx/xxx/xxx
-   *
-   * wherre xxx should be the name of a regroot
-   *
-   * @group rf
-   * @return the found regroot, this if the search string is empty
-   * @throws RuntimeException if the specificed search path doesn't point to any regroot
-   */
+    * Search for a regroot
+    *
+    * Search String format:
+    *
+    * xxx/xxx/xxx
+    *
+    * wherre xxx should be the name of a regroot
+    *
+    * @group rf
+    * @return the found regroot, this if the search string is empty
+    * @throws RuntimeException if the specificed search path doesn't point to any regroot
+    */
   def group(searchAndApply: String)(implicit closure: Group => Unit): Group = {
 
     if (searchAndApply == "") {
@@ -84,7 +84,8 @@ class Group extends GroupTrait {
         currentSearchedRegRoot.groups.find(_.name.toString == currentSearchedRegRootName) match {
           case Some(nextRegRoot) => currentSearchedRegRoot = nextRegRoot
           case None =>
-            throw new RuntimeException(s"""
+            throw new RuntimeException(
+              s"""
                             Searching for regroot ${currentSearchedRegRootName} under ${currentSearchedRegRoot.name} in expression $searchAndApply failed, is the searched path available in the current in use registerfile ?
                         """)
         }
@@ -99,21 +100,48 @@ class Group extends GroupTrait {
     currentSearchedRegRoot
   }
 
+
+  def setRegisterValue(n: String, v: Double): Unit = register(n) {
+    r =>
+      r.setMemory(v)
+  }
+
+  def setRegisterValue(n: String, v: Boolean): Unit = register(n) {
+    case r if (v) =>
+      r.setMemory(1)
+    case r =>
+      r.setMemory(0)
+  }
+
+  def setFieldValue(n: String, v: Long): Unit = field(n) {
+    f =>
+      f.setMemory(v)
+
+  }
+
+  def setFieldValue(n: String, v: Boolean): Unit = field(n) {
+    case f if (v) =>
+      f.setMemory(1)
+    case f =>
+      f.setMemory(0)
+
+  }
+
   /**
-   * Search for a Register
-   *
-   * Search String format:
-   *
-   * xxxxx/xxx/xxxx/yyyyy
-   * path/to/regroot/register
-   *
-   * With:
-   *
-   * - xxxx are possible regroots to search
-   * - the last path element yyyy beeing the name of the searched register
-   *
-   * @group rf
-   */
+    * Search for a Register
+    *
+    * Search String format:
+    *
+    * xxxxx/xxx/xxxx/yyyyy
+    * path/to/regroot/register
+    *
+    * With:
+    *
+    * - xxxx are possible regroots to search
+    * - the last path element yyyy beeing the name of the searched register
+    *
+    * @group rf
+    */
   def register(searchAndApply: String)(implicit closure: Register => Unit): Register = {
 
     // Split String
@@ -136,7 +164,8 @@ class Group extends GroupTrait {
 
         return searchedRegister
       case None =>
-        throw new RuntimeException(s"""
+        throw new RuntimeException(
+          s"""
                     Searching for Register ${searchedRegister} under ${regRoot.name} in expression $searchAndApply failed, is the searched path available in the current in use registerfile ?
                 """)
     }
@@ -144,21 +173,21 @@ class Group extends GroupTrait {
   }
 
   /**
-   * Search for a RamBlock
-   *
-   * Search String format:
-   *
-   * xxxxx/xxx/xxxx/yyyyy
-   * path/to/regroot/ramblock
-   *
-   * With:
-   *
-   * - xxxx are possible regroots to search
-   * - the last path element yyyy beeing the name of the searched ramblock
-   *
-   * @group rf
-   *
-   */
+    * Search for a RamBlock
+    *
+    * Search String format:
+    *
+    * xxxxx/xxx/xxxx/yyyyy
+    * path/to/regroot/ramblock
+    *
+    * With:
+    *
+    * - xxxx are possible regroots to search
+    * - the last path element yyyy beeing the name of the searched ramblock
+    *
+    * @group rf
+    *
+    */
   def ram(searchAndApply: String)(implicit closure: RamBlock => Unit): RamBlock = {
 
     // Split String
@@ -181,7 +210,8 @@ class Group extends GroupTrait {
 
         return searchedRam
       case None =>
-        throw new RuntimeException(s"""
+        throw new RuntimeException(
+          s"""
                     Searching for Ram ${searchedRamName} under ${regRoot.name} in expression $searchAndApply failed, is the searched path available in the current in use registerfile ?
                 """)
     }
@@ -189,21 +219,21 @@ class Group extends GroupTrait {
   }
 
   /**
-   * Search for a Field
-   *
-   * Search String format:
-   *
-   * xxxxx/xxx/xxxx/yyyyy.fieldName
-   *
-   *
-   * With:
-   *
-   * - xxxx are possible regroots to search
-   * - the last path element yyyy beeing the name of the searched register
-   * - @fieldName is the name of the field to search on target register
-   *
-   * @group rf
-   */
+    * Search for a Field
+    *
+    * Search String format:
+    *
+    * xxxxx/xxx/xxxx/yyyyy.fieldName
+    *
+    *
+    * With:
+    *
+    * - xxxx are possible regroots to search
+    * - the last path element yyyy beeing the name of the searched register
+    * - @fieldName is the name of the field to search on target register
+    *
+    * @group rf
+    */
   def field(searchAndApply: String)(implicit closure: Field => Unit): Field = {
 
     // Get Register Path and Field Path

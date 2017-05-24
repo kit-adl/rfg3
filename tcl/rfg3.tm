@@ -38,9 +38,26 @@ namespace eval odfi::rfg {
         #####################
         +type RFGNode {
 
+            +var cachedHierName ""
+
             +method getHierarchyName {{separator _}} {
 
-                return [:shade { return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[:name get]
+                if {${:cachedHierName}==""} {
+                    set hierName [:shade { 
+                                return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]
+                                } formatHierarchyString {$it name get} _]
+                    if {$hierName==""} {
+                        set :cachedHierName [:name get]
+                    } else {
+                        set :cachedHierName [join [list $hierName [:name get]] _]
+                    }
+                    #puts "Hier Name of: [:name get] is $hierName"
+                    #set :cachedHierName [join [list $hierName [:name get]] _]
+                }
+
+                return ${:cachedHierName}
+                
+                #return [:shade { return [expr [$it isClass odfi::rfg::RFGNode] && ![$it isClass odfi::rfg::RegisterFile] ]} formatHierarchyString {$it name get} _]_[:name get]
 
             }
         }
@@ -348,6 +365,9 @@ namespace eval odfi::rfg {
             :register : Description name {
                 +mixin ::odfi::attributes::AttributesContainer
                 +var reset 0
+                +var width -1
+
+
 
                 ## End of register, if no field, create a field with same name and width as register 
                 +builder {
@@ -359,13 +379,64 @@ namespace eval odfi::rfg {
                         }
                     }
                 }
+
+                ##  Rights 
+                +method softwareRead args {
+
+                    :attribute ::odfi::rfg::rights sw ro
+                }
+                +method softwareWrite args {
+
+                    :attribute ::odfi::rfg::rights sw wo
+                }
+
+                +method isSoftwareRead args {
+                    return [:attributeMatch ::odfi::rfg::rights sw *r*]
+                }
+                +method isSoftwareWrite args {
+                    return [:attributeMatch ::odfi::rfg::rights sw *w*]
+                }
+
+                +method hardwareWrite args {
+                    :attribute ::odfi::rfg::rights hw wo
+                }
+                +method hardwareRead args {
+                    :attribute ::odfi::rfg::rights hw ro
+                }
+                 +method isHardwareRead args {
+                    return [:attributeMatch ::odfi::rfg::rights hw *r*]
+                }
+                +method isHardwareWrite args {
+                    return [:attributeMatch ::odfi::rfg::rights hw *w*]
+                }
+
+                ## Returns empty string if not found
+                +method findInterface args {
+
+                    return  [:findParentInPrimaryLine {$it isClass ::odfi::rfg::Interface}]
+                 
+
+                }
                 
+                ## Width is sum of Fields of default size
                 +method getWidth args {
                     
-                    set sum 0
-                    [:shade ::odfi::rfg::Field children] @> map {return [$it width get]} @> foreach {
-                        set sum [expr $sum + $it]
+                    if {[:shade odfi::rfg::Field firstChild]==""} {
+                        set interface [:findInterface]
+                        if {$interface==""} {
+                            return 0
+                        } else {
+                        puts "Reg get width: [$interface info class]"
+                            return [$interface registerSize get]
+                        }
+                       
+                    } else {
+                        set sum 0 s
+                        [:shade ::odfi::rfg::Field children] @> map {return [$it width get]} @> foreach {
+                         set sum [expr $sum + $it]
+                        }
                     }
+                    
                     
                     
                     return $sum

@@ -1,16 +1,23 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>kit.ipe.adl.rfg3</groupId>
 	<artifactId>rfg3-core</artifactId>
-	<version>3.1.0</version>
+	<version>3.1.2</version>
 
 	<!-- use OSI Scala Parent pom to have scala enabled -->
 	<!-- ################# -->
 	<parent>
 		<groupId>org.odfi</groupId>
 		<artifactId>superpom-scala</artifactId>
-		<version>2.12.1.r2</version>
+		<version>2.12.2.r1</version>
 	</parent>
+
+	<properties>
+		<ooxoo.version>3.2.3</ooxoo.version>
+		<wsb.version>3.3.1</wsb.version>
+		<indesign.core.version>1.1.0</indesign.core.version>
+	</properties>
 
 
 	<!-- SCM -->
@@ -24,27 +31,6 @@
 
 	<build>
 		<plugins>
-<!-- 			<plugin> -->
-<!-- 				<groupId>net.alchim31.maven</groupId> -->
-<!-- 				<artifactId>scala-maven-plugin</artifactId> -->
-<!-- 				<configuration> -->
-<!-- 					<useZincServer>true</useZincServer> -->
-<!-- 					<addZincArgs>-no-color</addZincArgs> -->
-<!-- 				</configuration> -->
-<!-- 				<executions> -->
-<!-- 					<execution> -->
-<!-- 						<id>add-source</id> -->
-<!-- 						<phase>generate-sources</phase> -->
-<!-- 						<goals> -->
-<!-- 							<goal>add-source</goal> -->
-<!-- 						</goals> -->
-<!-- 						<configuration> -->
-<!-- 							<sourceDir>${basedir}/target/generated-sources/scala</sourceDir> -->
-<!-- 						</configuration> -->
-<!-- 					</execution> -->
-<!-- 				</executions> -->
-<!-- 			</plugin> -->
-			
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
@@ -75,17 +61,17 @@
 					</execution>
 				</executions>
 			</plugin>
-			
-			
+
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-ooxoo-plugin</artifactId>
-				<version>3.2.1</version>
+				<version>${ooxoo.version}</version>
 				<dependencies>
 					<dependency>
 						<groupId>org.odfi.wsb</groupId>
 						<artifactId>wsb-core</artifactId>
-						<version>3.3.0</version>
+						<version>${wsb.version}</version>
 					</dependency>
 				</dependencies>
 				<executions>
@@ -97,36 +83,12 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 			<!-- Add Scala Doc To Site -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
 				<version>3.3</version>
-				<configuration>
-					<reportPlugins>
-						<plugin>
-							<artifactId>maven-project-info-reports-plugin</artifactId>
-							<version>2.2</version>
-						</plugin>
-						<plugin>
-							<groupId>net.alchim31.maven</groupId>
-							<artifactId>scala-maven-plugin</artifactId>
-							<version>${scala.plugin.version}</version>
-							<configuration>
-								<jvmArgs>
-									<jvmArg>-Xms64m</jvmArg>
-									<jvmArg>-Xmx1024m</jvmArg>
-								</jvmArgs>
-								<args>
-									<arg>-diagrams</arg>
-									<arg>-groups</arg>
-								</args>
-								<doctitle>RFG Interface API</doctitle>
-							</configuration>
-						</plugin>
-					</reportPlugins>
-				</configuration>
 			</plugin>
 
 			<!-- Add Sources to upload -->
@@ -147,7 +109,7 @@
 
 	</build>
 
-	
+
 	<!-- Repositories to find OSI packages -->
 	<!-- ############################################## -->
 	<pluginRepositories>
@@ -168,7 +130,7 @@
 			</snapshots>
 			<id>odfi.central</id>
 			<name>plugins-release</name>
-			<url>https://www.opendesignflow.org/maven/repository/internal/</url>
+			<url>http://www.opendesignflow.org/maven/repository/internal/</url>
 		</pluginRepository>
 		<pluginRepository>
 			<snapshots>
@@ -176,7 +138,7 @@
 			</snapshots>
 			<id>odfi.snapshots</id>
 			<name>plugins-snapshot</name>
-			<url>https://www.opendesignflow.org/maven/repository/snapshots/</url>
+			<url>http://www.opendesignflow.org/maven/repository/snapshots/</url>
 		</pluginRepository>
 	</pluginRepositories>
 	<repositories>
@@ -197,57 +159,29 @@
 			</snapshots>
 			<id>odfi.central</id>
 			<name>odfi-release</name>
-			<url>https://www.opendesignflow.org/maven/repository/internal/</url>
+			<url>http://www.opendesignflow.org/maven/repository/internal/</url>
 		</repository>
 		<repository>
 			<snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+				<enabled>true</enabled>
+			</snapshots>
 			<id>odfi.snapshots</id>
 			<name>odfi-snapshot</name>
-			<url>https://www.opendesignflow.org/maven/repository/snapshots/</url>
+			<url>http://www.opendesignflow.org/maven/repository/snapshots/</url>
 		</repository>
 	</repositories>
 
 
-
-
-	<!-- Distribution -->
-	<!-- ############ -->
-	<!-- <distributionManagement> -->
-	<!-- <repository> -->
-	<!-- <id>extoll.release</id> -->
-	<!-- <name>Extoll Public Release Repository</name> -->
-	<!-- <url>https://www.extoll.de/schloss/nexus/content/repositories/releases/</url> -->
-	<!-- </repository> -->
-	<!-- <snapshotRepository> -->
-	<!-- <id>extoll.snapshot</id> -->
-	<!-- <name>Extoll Public Snapshot Repository</name> -->
-	<!-- <url>https://www.extoll.de/schloss/nexus/content/repositories/snapshots/</url> -->
-	<!-- </snapshotRepository> -->
-	<!-- </distributionManagement> -->
-
 	<dependencies>
-<!-- 		<dependency> -->
-<!-- 			<groupId>com.idyria.osi.aib</groupId> -->
-<!-- 			<artifactId>aib-core</artifactId> -->
-<!-- 			<version>3.1.0</version> -->
-<!-- 		</dependency> -->
 		<dependency>
-			<groupId>org.odfi.ooxoo</groupId>
-			<artifactId>ooxoo-core</artifactId>
-			<version>3.2.1</version>
+			<groupId>org.odfi.indesign</groupId>
+			<artifactId>indesign-core</artifactId>
+			<version>${indesign.core.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.odfi.wsb</groupId>
 			<artifactId>wsb-core</artifactId>
-			<version>3.3.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency> 
-			<groupId>org.odfi.indesign</groupId>
-			<artifactId>indesign-core</artifactId>
-			<version>1.1.0-SNAPSHOT</version>
+			<version>${wsb.version}</version>
 		</dependency>
 	</dependencies>
 

@@ -17,7 +17,7 @@ class VerilogLongValue extends LongBuffer {
   /**
    * Parse Verilog value
    */
-  override def dataFromString(str: String): java.lang.Long = {
+  override def dataFromString(str: String): Long = {
 
     this.originalStringValue = str
     var resValue: Long = 0

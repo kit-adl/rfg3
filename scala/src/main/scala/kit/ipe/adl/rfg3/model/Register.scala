@@ -11,7 +11,16 @@ import com.idyria.osi.ooxoo.core.buffers.structural.xelement
 @xelement(name="RegisterTrait")
 class Register extends RegisterTrait with Valued with Dynamic {
 
-  
+  // Output current Value as attribute
+  //--------------------------
+  override def streamOut(du:DataUnit) = {
+    
+    //-- Set current value
+    this.currentValue = getMemory
+    
+    super.streamOut(du)
+    
+  }
   
   // End of parsing
   //-------------------------
