@@ -102,6 +102,8 @@ object Device extends Device {
     d
   }
 
+  def findPhysicalDevice = DeviceHarvester.getResourcesOfType[Device].find { d => d.isPhysical}
+  
   def getDeviceOption(nodeId: Int) = {
     try {
       Some(this.getDevice(nodeId))
