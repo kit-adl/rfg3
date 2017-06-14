@@ -295,6 +295,7 @@ namespace eval odfi::rfg::generator::h2dl {
                                                                 #set targetSignal [$rfgModule shade odfi::h2dl::IO findChildByProperty name [$node getHierarchyName]_[$dataOutIO name get]]
                                                                 
                                                                 set targetSignal [$rfgModule wire [$node getHierarchyName]_[$dataOutIO name get]]
+                                                                $targetSignal width set [$dataOutIO width get]
                                                                 $dataOutIO connection $targetSignal
                                                             }
                                                             
