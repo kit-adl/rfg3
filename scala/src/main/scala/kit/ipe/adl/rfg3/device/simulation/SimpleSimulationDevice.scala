@@ -21,15 +21,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package kit.ipe.adl.rfg3.device.simulation
 
 import kit.ipe.adl.rfg3.device.Device
+import kit.ipe.adl.rfg3.model.Register
+import kit.ipe.adl.rfg3.language.RegisterFileHost
 
 
 /**
- * @author fzahn
+ *
  *
  */
 class SimpleSimulationDevice extends Device {
 
   isPhysical = false
+  
+  /**
+   * Number of values saved for a specific address
+   */
+  var defaultSaveFrameDepth = 512
   
   def open = {
 
@@ -38,24 +45,47 @@ class SimpleSimulationDevice extends Device {
   def close = {
 
   }
+  
+  
 
   // Node -> RegisterFile Map
   //-----------------
-  var nodesMap = scala.collection.mutable.Map[Short, scala.collection.mutable.Map[Long, Long]]()
+  var nodesMap = scala.collection.mutable.Map[Short, scala.collection.mutable.Map[Long, Array[Long]]]()
 
-  private def getNodeMap(nodeId: Short): scala.collection.mutable.Map[Long, Long] = {
+  private def getNodeMap(nodeId: Short): scala.collection.mutable.Map[Long,  Array[Long]] = {
 
     nodesMap.get(nodeId) match {
       case Some(map) => map
       case None =>
-        var nodeMap = scala.collection.mutable.Map[Long, Long]()
+        var nodeMap = scala.collection.mutable.Map[Long,  Array[Long]]()
         nodesMap = nodesMap + (nodeId -> nodeMap)
         nodeMap
 
     }
 
   }
+  
+  // Get values
+  //---------------
+  def getValuesOfRegister(target:RegisterFileHost , r:Register) = {
+    
+   r.findAttributeLong("::odfi::rfg::address.absolute") match {
+     case Some(address) => 
+       
+       this.getNodeMap(target.id).get(address) match {
+         case Some(values) => Some(values) 
+         case None => None
+       }
+       
+     case None => 
+       logWarn("Simulated values for register: "+r.name+" not available, address ::odfi::rfg::address.absolute not defined on attributes")
+       None
+   }
+    
+  }
 
+  // Read Write
+  //--------------
   def readRegister(nodeId: Short, address: Long,size:Int): Option[Array[Long]] = {
 
  //   println("Read from  " + nodeId)
@@ -63,7 +93,7 @@ class SimpleSimulationDevice extends Device {
     // Get node Map and read
     //-----------
     this.getNodeMap(nodeId).get(address) match {
-      case Some(v) => Some(Array(v))
+      case Some(v) => Some(Array(v.last))
       case None => Some(Array(0))
     }
 
@@ -72,8 +102,19 @@ class SimpleSimulationDevice extends Device {
   def writeRegister(nodeId: Short, address: Long, value: Array[Long]) = {
 
   //  println("Writing to " + nodeId)
-    
-    this.getNodeMap(nodeId) += (address -> value(0))
+    //-- Get Map for node and update content
+    this.getNodeMap(nodeId).get(address) match {
+      
+      // Update values
+      case Some(values) => 
+        
+        this.getNodeMap(nodeId).update(address, (values ++ value).takeRight(defaultSaveFrameDepth)) 
+        
+      case None => 
+        
+        this.getNodeMap(nodeId).update(address,value.takeRight(defaultSaveFrameDepth))
+    }
+
   }
 
 }

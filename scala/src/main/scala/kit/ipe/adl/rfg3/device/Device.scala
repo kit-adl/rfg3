@@ -95,7 +95,7 @@ object Device extends Device {
   /**
     * Add new avaible devices and clean old references as well
     */
-  def addAvailableDevice(d: Device) = {
+  def addAvailableDevice[D <: Device](d: D) = {
     // this.availableDevices = this.availableDevices.filter(p => p.get != null) :+ d
     //this.availableDevices = this.availableDevices :+ d
     DeviceHarvester.gatherDirect(d)
