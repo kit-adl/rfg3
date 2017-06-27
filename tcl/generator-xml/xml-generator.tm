@@ -22,7 +22,7 @@ namespace eval  ::odfi::rfg::generator::xml {
                 set res [:reducePlus {
                 
 
-                    //puts "Testing node/: [$node name get] -> [$node info class]"
+                    #puts "Testing node/: [$node name get] -> [$node info class]"
 
                     if {[$node isClass ::odfi::rfg::RegisterFile]} {
                     

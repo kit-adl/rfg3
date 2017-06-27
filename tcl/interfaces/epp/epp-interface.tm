@@ -42,8 +42,8 @@ odfi::language::nx::new ::odfi::rfg::interface::epp {
                 [$rfgInstance findChildByProperty name read_data] connection rfs_read_data
                 [$rfgInstance findChildByProperty name write_data] connection rfs_write_data
                 [$rfgInstance findChildByProperty name done] connection rfs_access_complete
-                [$rfgInstance findChildByProperty name read] connection rfs_read
-                [$rfgInstance findChildByProperty name write] connection rfs_write
+                [$rfgInstance findChildByProperty name read] connection rfs_read_en
+                [$rfgInstance findChildByProperty name write] connection rfs_write_en
                 [$rfgInstance findChildByProperty name address] connection rfs_address
             }
 

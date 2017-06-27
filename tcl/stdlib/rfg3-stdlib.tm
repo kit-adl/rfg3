@@ -190,14 +190,13 @@ odfi::language::nx::new ::odfi::rfg::xilinx {
             set fifoModule [::odfi::h2dl::module [:getHierarchyName] {
                 :attribute ::odfi::h2dl blackbox true
                 :input rst {
-                    :attribute ::odfi::rfg::h2dl reset true
+                    :attribute ::odfi::rfg::h2dl reset posedge
+                   
                 }
-                :input wr_clk {
+                :input clk {
                     :attribute ::odfi::rfg::h2dl clock true
                 }
-                :input rd_clk {
-                    :attribute ::odfi::rfg::h2dl clock true
-                }
+                
                 
                 :input din {
                     :width set $fifoWidth

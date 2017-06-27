@@ -318,12 +318,22 @@ namespace eval odfi::rfg::generator::h2dl {
                                                         }
                                                     }
 
+                                                } elseif  {[$node isHardwareRead]} {
+
+                                                    ## Push connection up 
+                                                    set targetSignal [$rfgModule wire [$node getHierarchyName]_shiftout]
+                                                    $targetSignal toOutput
+                                                    $io connection $targetSignal
+                                                    
+                                                    #$io pushUp [$node getHierarchyName]
                                                 }
                                                 
                                                 
                                                 
                                             } elseif {[$io hasAttribute ::odfi::rfg::h2dl write_enable]} {        
                                             
+                                               
+
                                                 ## Match write enable to address
                                                 if {[$node isSoftwareWrite]} {
 
@@ -332,6 +342,8 @@ namespace eval odfi::rfg::generator::h2dl {
                                                     $weWire assign "$address == [$node getAttribute ::odfi::rfg::address absolute]"
                                                     
                                                     $io connection $weWire
+
+
 
                                                 } else {
 

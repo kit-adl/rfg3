@@ -104,22 +104,7 @@ namespace eval odfi::rfg {
                     puts "Inside Interface builder with parent: [:parent]"
                     :regenerate
                     return
-                    ## get location
-                    lassign  [::odfi::common::findFileLocation] f l frame up
                     
-                    puts "loc:  [::odfi::common::findFileLocation] , current level [info level]"
-                    #foreach elt [::odfi::common::findFileLocationSegments] {
-                    #    puts "S: $elt"
-                    #}
-                    #
-                   #exit
-                    
-                    set p [:parent]
-                    if {$p!="" && [$p isClass ::odfi::h2dl::Module]} {
-                        set instance [:createInstance ${:instanceName}]
-                        $p addChild $instance
-                        uplevel $up [list ::set ${:instanceName} $instance]
-                    }
                 }
                
                 
@@ -128,6 +113,12 @@ namespace eval odfi::rfg {
             }
             ## EOF Builder
             
+            +method getRegisterFile args {
+
+                return  [:shade odfi::rfg::RegisterFile firstChild]
+           
+            }
+
             ## Push Signals marked as external
             ## Useful for external Chip Interface to be easily connected
             +method pushExternal args {
