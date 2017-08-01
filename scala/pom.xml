@@ -15,7 +15,7 @@
 
 	<properties>
 		<ooxoo.version>3.3.0-SNAPSHOT</ooxoo.version>
-		<wsb.version>3.3.1</wsb.version>
+		<wsb.version>3.4.0-SNAPSHOT</wsb.version>
 		<indesign.core.version>1.2.0-SNAPSHOT</indesign.core.version>
 	</properties>
 
