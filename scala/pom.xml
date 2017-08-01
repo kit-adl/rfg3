@@ -10,13 +10,13 @@
 	<parent>
 		<groupId>org.odfi</groupId>
 		<artifactId>superpom-scala</artifactId>
-		<version>2.12.2.r1</version>
+		<version>2.12.2.r17</version>
 	</parent>
 
 	<properties>
-		<ooxoo.version>3.2.3</ooxoo.version>
+		<ooxoo.version>3.3.0-SNAPSHOT</ooxoo.version>
 		<wsb.version>3.3.1</wsb.version>
-		<indesign.core.version>1.1.0</indesign.core.version>
+		<indesign.core.version>1.2.0-SNAPSHOT</indesign.core.version>
 	</properties>
 
 
