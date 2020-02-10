@@ -1,0 +1,12 @@
+{
+  "name": "rfg3",
+  "description": "RFG3 Package",
+  "authors": "author",
+  "version": "1.0.0",
+  "files": [
+    "tcl/*"
+  ],
+  "dependencies": {
+    "odfi-dev-tcl": "opendesignflow/odfi-dev-tcl#dev"
+  }
+}
