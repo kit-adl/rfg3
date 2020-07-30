@@ -7,6 +7,7 @@
     "tcl/*"
   ],
   "dependencies": {
-    "odfi-dev-tcl": "opendesignflow/odfi-dev-tcl#dev"
+    "odfi-dev-tcl": "opendesignflow/odfi-dev-tcl#dev",
+    "odfi-h2dl": "opendesignflow/h2dl#dev"
   }
 }
