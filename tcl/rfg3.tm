@@ -310,7 +310,10 @@ namespace eval odfi::rfg {
                         if {$interface==""} {
                         
                             if {[[current object] hasAttribute ::odfi::rfg registerSize]} {
+
                                 set registerSize [[current object] getAttribute ::odfi::rfg registerSize]
+                                odfi::log::info "Mapping Addresses using attribute register Size $registerSize"
+                                
                             } else {
                                 odfi::log::warn "No Interface found in RFG hierarchy and no ::odfi::rfg::registerSize attribute , using default register width of 8"
                                 set registerSize 8
@@ -346,6 +349,57 @@ namespace eval odfi::rfg {
                     ## Add Address Size as attribute  and next power of two
                     :attribute ::odfi::rfg::address size [expr $currentAddress == 0 ? 1 : int(ceil(log($currentAddress)/log(2)))]
 
+
+                }
+
+                +method getRegisterSize {{defaultSize 8}} {
+
+                    set registerSize $defaultSize
+
+                    ## Find Interface 
+                    #############
+                    ## Get Interface
+                    set interface [current object]
+                    if {![$interface isClass ::odfi::rfg::Interface]} {
+                        set interface [[:shade ::odfi::rfg::Interface getParentsRaw] at 0]
+                        if {$interface==""} {
+                        
+                            if {[[current object] hasAttribute ::odfi::rfg registerSize]} {
+
+                                set registerSize [[current object] getAttribute ::odfi::rfg registerSize]
+                                odfi::log::info "Mapping Addresses using attribute register Size $registerSize"
+                                
+                            } else {
+                                odfi::log::warn "No Interface found in RFG hierarchy and no ::odfi::rfg::registerSize attribute , using default register width of 8"
+                                
+                            }  
+                           
+                            #error "Register File Cannot Map Addresses because the register size is required to generate correct address increment"
+                        } else {
+                            ## Get Register Size 
+                            set registerSize [$interface registerSize get]
+                        }
+                    } else {
+                        ## Get Register Size 
+                        set registerSize [$interface registerSize get]                        
+                    }
+
+                    return $registerSize
+
+
+                }
+
+                +method setDualPort args {
+                    :attribute ::odfi::rfg dualport true 
+                }
+
+                +method onDualPort {DPC else notDPC} {
+
+                    if {[:hasAttribute ::odfi::rfg dualport]} {
+                        :applyUp $DPC 
+                    } else {
+                        :applyUp $notDPC
+                    }
 
                 }
 
@@ -394,6 +448,11 @@ namespace eval odfi::rfg {
                 +method hardwareRead args {
                     :attribute ::odfi::rfg::rights hw ro
                 }
+
+                +method hardwareWrittenFromSoftware args {
+                    :attribute ::odfi::rfg::hw sw_written 1
+                }
+
                  +method isHardwareRead args {
                     return [:attributeMatch ::odfi::rfg::rights hw *r*]
                 }

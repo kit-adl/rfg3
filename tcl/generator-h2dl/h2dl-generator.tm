@@ -36,6 +36,17 @@ namespace eval odfi::rfg::generator::h2dl {
                 next
             }
 
+            +method generate_to_file args {
+
+                puts "Generating to name: [:name get]"
+
+                ## Create Module
+                set module [:toModule]
+                $module verilog:generate
+
+
+            }
+
             +method generate {{module_closure ""}} {
                 puts "CREATE H2DL IN INTERFACE"
 
@@ -94,12 +105,10 @@ namespace eval odfi::rfg::generator::h2dl {
                 }
 
 
-
-                
-
                 ## Get RF 
                 if {[[current object] isClass  odfi::rfg::RegisterFile]} {
                     set rf [current object]
+                    set registerSize [:getRegisterSize]
                 } else {
                     set rf [:shade odfi::rfg::RegisterFile firstChild]
                 }
@@ -113,6 +122,7 @@ namespace eval odfi::rfg::generator::h2dl {
 
                 ## Map to addresses if necessary
                 if {![$rf hasAttribute ::odfi::rfg::address absolute]} {
+                    odfi::log::info "Mapping Addresses"
                     $rf mapAddresses
                 }
 
@@ -156,10 +166,33 @@ namespace eval odfi::rfg::generator::h2dl {
                     :output done {
                         :attribute ::odfi::rfg::generator::h2dl internal true
                     }
-                    :input  address {
-                        :width set $rfSize
-                        :attribute ::odfi::rfg::generator::h2dl internal true                        
+
+                    $rf onDualPort {
+
+                        :input  read_address {
+                            :width set $rfSize
+                            :attribute ::odfi::rfg::generator::h2dl internal true                        
+                        }
+
+                        :input  write_address {
+                            :width set $rfSize
+                            :attribute ::odfi::rfg::generator::h2dl internal true                        
+                        }
+
+                        set writeAddressIOName "write_address"
+                        set readAddressIOName "read_address"
+
+                    } else {
+                        :input  address {
+                            :width set $rfSize
+                            :attribute ::odfi::rfg::generator::h2dl internal true                        
+                        }
+
+                        set writeAddressIOName "address"
+                        set readAddressIOName "address"
                     }
+                   
+
 
 
                     ## Create Read posedge  
@@ -283,7 +316,7 @@ namespace eval odfi::rfg::generator::h2dl {
                                                     ## reset correctly
                                                     ## Read Else is the main clock in read posedge
                                                     $readIf apply {
-                                                        :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
+                                                        :if { ($readAddressIOName == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
                                                         
                                                             ## Map Read data to module out
                                                             set dataOutIO [$h2dlModuleInstanceForReg shade odfi::h2dl::Output findFirstChild {$it hasAttribute ::odfi::rfg::h2dl data_out}]
@@ -339,7 +372,7 @@ namespace eval odfi::rfg::generator::h2dl {
 
                                                     ## Write Enable is for this address
                                                     set weWire [$rfgModule wire [$node getHierarchyName]_write_enable]
-                                                    $weWire assign "$address == [$node getAttribute ::odfi::rfg::address absolute]"
+                                                    $weWire assign "$readAddressIOName == [$node getAttribute ::odfi::rfg::address absolute]"
                                                     
                                                     $io connection $weWire
 
@@ -395,9 +428,10 @@ namespace eval odfi::rfg::generator::h2dl {
 
                             } 
 
+                            ## Register Write/Read
                             if {$addWrite || $addRead} {
 
-                                ## Check HW Rights
+                                ## Check HW Rights 
                                 ############
                                 
                                 ## IF Register has an attribute rw for hardware, we should add the HWWrite block
@@ -479,25 +513,56 @@ namespace eval odfi::rfg::generator::h2dl {
                                 
 
                                 ## Add Posedge for the register write  
+                                ## :attribute ::odfi::rfg::hw sw_written
                                 #############
                                 if {$addWrite} {
 
-
+                                     if {[$node hasAttribute ::odfi::rfg::hw sw_written ]} {
+                                        set swWrittenReg [:register [$node getHierarchyName]_sw_written] 
+                                        $swWrittenReg toOutput
+                                     }
                                     :posedge $clk {
 
                                         #:doReset $res_n
                                         :reset $res_n
                                         :if {! $res_n} {
                                             $h2dlReg <= 0
+
+                                            ## Written
+                                            $node onAttribute ::odfi::rfg::hw sw_written {
+                                                puts "Inside reset set"
+                                                 $swWrittenReg <= 0;
+                                            }
+                                            #if {[$node hasAttribute ::odfi::rfg::hw sw_written ]} {
+                                            #    ## Create Reg
+                                            #    $swWrittenReg <= 0;
+                                            #}
+
+                                            
                                         }
                                         :else {
 
-                                            :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($write == 1)} {
+                                            :if { ($writeAddressIOName == [$node getAttribute ::odfi::rfg::address absolute]) && ($write == 1)} {
                                                 $h2dlReg <= $write_data
+
+                                                $node onAttribute ::odfi::rfg::hw sw_written {
+                                                    $swWrittenReg <= 1;
+                                                }
+                                                ## Written
+                                                #if {[$node hasAttribute ::odfi::rfg::hw sw_written ]} {
+                                                    ## Create Reg
+                                                #    $swWrittenReg <= 1;
+                                                #}
                                             }
+
                                             ## HW Write
                                             ################
                                             if {$addHWWrite} {
+
+                                                ## Reset SW Written
+                                                 $node onAttribute ::odfi::rfg::hw sw_written {
+                                                    $swWrittenReg <= 0;
+                                                }
                                             
                                                 set hwWriteInputEnable [$rfgModule input [$h2dlReg name get]_hw_write {
                                                    :attribute ::odfi::rfg isData 1
@@ -579,6 +644,16 @@ namespace eval odfi::rfg::generator::h2dl {
                                                 
                                                 
                                             }
+                                            ## End of HW Write
+
+                                            ## Register Write Else to reset special features
+                                            :else {
+
+                                                ## Reset SW Written
+                                                 $node onAttribute ::odfi::rfg::hw sw_written {
+                                                    $swWrittenReg <= 0;
+                                                }
+                                            }
                                         }
                                         
 
@@ -593,7 +668,7 @@ namespace eval odfi::rfg::generator::h2dl {
 
 
                                     $readIf apply {
-                                        :if { ($address == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
+                                        :if { ($readAddressIOName == [$node getAttribute ::odfi::rfg::address absolute]) && ($read == 1) } {
                                             $read_data <= $h2dlReg
                                             $done <= 1
                                         }
